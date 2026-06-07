@@ -1,4 +1,4 @@
 echo "🔨 Running build before push..."
-pnpm run build
+vite build
 
-echo "✅ Build successful! Proceeding with push..." 
+echo "✅ Build successful! Proceeding with push..."
