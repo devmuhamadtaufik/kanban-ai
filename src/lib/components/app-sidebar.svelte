@@ -22,7 +22,7 @@
 	import { resolve } from '$app/paths';
 
 	import { api } from '$convex/_generated/api.js';
-	import { useQuery } from 'convex-svelte';
+	import { useQuery } from '@mmailaender/convex-svelte';
 
 	// Get current user from Convex
 	const currentUserResponse = useQuery(api.auth.getCurrentUser, {});

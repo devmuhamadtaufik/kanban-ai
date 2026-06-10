@@ -9,8 +9,8 @@ Instead of duplicating extensive documentation, this guide provides links to the
 When working on authentication-related tasks, always refer to these official documents to ensure you are following the correct patterns and security best practices:
 
 - **Convex & Svelte Adapter**: This project uses a specific adapter for integrating `better-auth` with Convex and SvelteKit. The README for this adapter is a crucial resource.
-  - [Better Auth - SvelteKit Convex Integration](https://convex-better-auth.netlify.app/framework-guides/sveltekit)
-  - [Convex Better Auth - Local Install (needed for admin and organization plugins)](https://convex-better-auth.netlify.app/features/local-install)
+  - [Better Auth - SvelteKit Convex Integration](https://labs.convex.dev/better-auth/framework-guides/sveltekit)
+  - [Convex Better Auth - Local Install (needed for admin and organization plugins)](https://labs.convex.dev/better-auth/features/local-install)
 
 - **Official Documentation**: The primary source for all `better-auth` concepts, API, and guides.
   - [Better Auth Docs - Introduction](https://www.better-auth.com/docs/introduction)
@@ -23,6 +23,39 @@ When working on authentication-related tasks, always refer to these official doc
 
 - **Google OAuth**: Documentation for setting up Google Sign-In.
   - [Better Auth - Google OAuth](https://www.better-auth.com/docs/authentication/google)
+
+## Local Install & Schema Generation
+
+This project uses the Convex Better Auth **local install** ([docs](https://labs.convex.dev/better-auth/features/local-install)). Instead of relying on the library's pre-packaged component, the Better Auth component is vendored into our own Convex project under `src/convex/betterAuth/`, so we own its schema. This is required because we use schema-extending plugins (e.g. `admin`, which adds `role`, `banned`, … to the user table) — the packaged component can't know about those fields.
+
+Files under `src/convex/betterAuth/`:
+
+| File               | Role                                                                                                                                                   |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `convex.config.ts` | Declares the dir as a Convex component (`defineComponent('betterAuth')`). The app's `src/convex/convex.config.ts` wires it with `app.use(betterAuth)`. |
+| `schema.ts`        | The Better Auth tables (`user`, `session`, `account`, `verification`, `jwks`) **including plugin-added fields**. Auto-generated — do not edit by hand. |
+| `adapter.ts`       | The component's CRUD surface (`create`, `findOne`, …) via `createApi(schema, createOptions)`.                                                          |
+| `auth.ts`          | A static `auth` instance used only by the CLI for schema introspection (no real Convex `ctx`).                                                         |
+| `_generated/`      | Convex codegen for the component (produced by `convex dev`).                                                                                           |
+
+### Regenerating the schema
+
+Re-run the generator whenever you change the Better Auth plugins/config in `src/convex/auth.ts` or upgrade `better-auth` / `@convex-dev/better-auth`:
+
+```sh
+# from the project root
+cd src/convex/betterAuth
+npx @better-auth/cli generate --output schema.ts -y
+cd -
+pnpm exec prettier --write src/convex/betterAuth/schema.ts
+```
+
+Notes:
+
+- Use `npx @better-auth/cli generate` — **not** `npx auth generate`. The `auth` binary is not installed in this project, so `npx auth` would resolve to an unrelated package. (Some generated headers suggest `npx auth`; ignore that here.)
+- The CLI introspects the **installed** Better Auth instance (via `betterAuth/auth.ts`), so it emits fields matching your current `better-auth` version and plugins even if the CLI's own version differs.
+- The generator does not match our Prettier style, hence the `prettier --write` step.
+- `pnpm convex dev` then picks up the new `schema.ts`, regenerates `_generated/`, and pushes the migration. Commit the resulting `schema.ts` and `_generated/` changes together.
 
 ## Google OAuth Setup
 

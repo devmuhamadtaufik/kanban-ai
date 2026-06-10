@@ -3,9 +3,10 @@ import { convex } from '@convex-dev/better-auth/plugins';
 import { components } from './_generated/api';
 import { type DataModel } from './_generated/dataModel';
 import { query } from './_generated/server';
-import { betterAuth } from 'better-auth';
+import { betterAuth, type BetterAuthOptions } from 'better-auth';
 import { admin } from 'better-auth/plugins';
 import authSchema from './betterAuth/schema';
+import authConfig from './auth.config';
 
 const siteUrl = process.env.SITE_URL!;
 
@@ -17,16 +18,11 @@ export const authComponent = createClient<DataModel, typeof authSchema>(componen
 	}
 });
 
-export const createAuth = (
-	ctx: GenericCtx<DataModel>,
-	{ optionsOnly } = { optionsOnly: false }
-) => {
-	return betterAuth({
-		// disable logging when createAuth is called just to generate options.
-		// this is not required, but there's a lot of noise in logs without it.
-		logger: {
-			disabled: optionsOnly
-		},
+// Plain options factory — used both by `betterAuth()` at runtime and by
+// `createApi()` in the component adapter so it can introspect the schema.
+
+export const createOptions = (ctx: GenericCtx<DataModel>) =>
+	({
 		baseURL: siteUrl,
 		database: authComponent.adapter(ctx),
 		// User configuration
@@ -34,11 +30,11 @@ export const createAuth = (
 			changeEmail: {
 				enabled: true,
 				// eslint-disable-next-line @typescript-eslint/no-unused-vars
-				sendChangeEmailVerification: async ({ user, newEmail, url, token }, _request) => {
+				sendChangeEmailConfirmation: async ({ user, newEmail, url, token }, _request) => {
 					const resendApiKey = process.env.RESEND_API_KEY;
 					const from = process.env.RESET_EMAIL_FROM || 'ModernStack SaaS <no-reply@yourdomain.com>';
 					if (!resendApiKey) {
-						console.error('RESEND_API_KEY not set. Unable to send email change verification.');
+						console.error('RESEND_API_KEY not set. Unable to send email change confirmation.');
 						return;
 					}
 					try {
@@ -50,7 +46,7 @@ export const createAuth = (
 							},
 							body: JSON.stringify({
 								from,
-								to: user.email, // Send to current email to approve change
+								to: user.email,
 								subject: 'Approve email change',
 								...(process.env.RESET_EMAIL_REPLY_TO
 									? { reply_to: process.env.RESET_EMAIL_REPLY_TO }
@@ -67,13 +63,13 @@ export const createAuth = (
 						if (!res.ok) {
 							const text = await res.text();
 							console.error(
-								'Resend API error sending email change verification:',
+								'Resend API error sending email change confirmation:',
 								res.status,
 								text
 							);
 						}
 					} catch (e) {
-						console.error('Failed to send email change verification:', e);
+						console.error('Failed to send email change confirmation:', e);
 					}
 				}
 			}
@@ -136,12 +132,19 @@ export const createAuth = (
 		},
 		plugins: [
 			// The Convex plugin is required for Convex compatibility
-			convex(),
+			convex({ authConfig }),
 			// Admin plugin for roles/impersonation/banning APIs
 			admin()
 		]
+	}) satisfies BetterAuthOptions;
+
+export const createAuth = (ctx: GenericCtx<DataModel>, { optionsOnly } = { optionsOnly: false }) =>
+	betterAuth({
+		// disable logging when createAuth is called just to generate options.
+		// this is not required, but there's a lot of noise in logs without it.
+		logger: { disabled: optionsOnly },
+		...createOptions(ctx)
 	});
-};
 
 // Example function for getting the current user
 // Feel free to edit, omit, etc.

@@ -6,7 +6,7 @@
 	import * as Card from '$lib/components/ui/card/index.js';
 	import { toast } from 'svelte-sonner';
 	import { api } from '$convex/_generated/api.js';
-	import { useConvexClient } from 'convex-svelte';
+	import { useConvexClient } from '@mmailaender/convex-svelte';
 	import { Upload } from '@lucide/svelte';
 
 	interface Props {

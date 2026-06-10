@@ -7,7 +7,7 @@
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { Check } from '@lucide/svelte';
 
-	import { useConvexClient } from 'convex-svelte';
+	import { useConvexClient } from '@mmailaender/convex-svelte';
 	import type { PageData } from './$types';
 
 	const { data }: { data: PageData } = $props();

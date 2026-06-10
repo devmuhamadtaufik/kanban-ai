@@ -2,8 +2,8 @@ import { createConvexHttpClient } from '@mmailaender/convex-better-auth-svelte/s
 import { api } from '$convex/_generated/api';
 import type { PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async ({ cookies }) => {
-	const client = createConvexHttpClient({ cookies });
+export const load: PageServerLoad = async () => {
+	const client = createConvexHttpClient();
 
 	try {
 		// Fetch products and customer data in parallel
