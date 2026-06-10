@@ -345,26 +345,29 @@ export const exampleQuery = query({
 
 - Convex storage stores items as `Blob` objects. You must convert all items to/from a `Blob` when using Convex storage.
 
-## Frontend Integration with convex-svelte
+## Frontend Integration with @mmailaender/convex-svelte
+
+This project uses `@mmailaender/convex-svelte` (a Better Auth-aware fork of `convex-svelte`) together with `@mmailaender/convex-better-auth-svelte`, as prescribed by the [official Convex + Better Auth + SvelteKit guide](https://labs.convex.dev/better-auth/framework-guides/sveltekit). The reactive API (`useQuery`, `useConvexClient`) is the same as upstream `convex-svelte`; only the package name and client setup differ.
 
 ### Setup
 
-- Install `convex-svelte` package for real-time reactive queries in Svelte applications
-- Setup Convex in your root layout (`+layout.svelte`) using `setupConvex(convexUrl)`
-- Import `useQuery` for reactive data queries and `useConvexClient` for mutations/actions
+- The Convex client is set up in the root layout (`src/routes/+layout.svelte`) by `createSvelteAuthClient({ authClient })` from `@mmailaender/convex-better-auth-svelte/svelte`, which calls `setupConvex()` internally **and** wires Better Auth tokens — so you do not call `setupConvex()` yourself in this project.
+- (Without Better Auth you would instead call `setupConvex(PUBLIC_CONVEX_URL)` from `@mmailaender/convex-svelte` directly.)
+- Import `useQuery` for reactive data queries and `useConvexClient` for mutations/actions from `@mmailaender/convex-svelte`.
 
 ### Real-time Query Patterns
 
 ```typescript
-// +layout.svelte - Setup convex-svelte
-import { setupConvex } from 'convex-svelte';
-import { PUBLIC_CONVEX_URL } from '$env/static/public';
+// src/routes/+layout.svelte - Convex client + Better Auth setup
+import { createSvelteAuthClient } from '@mmailaender/convex-better-auth-svelte/svelte';
+import { authClient } from '$lib/auth-client';
 
-setupConvex(PUBLIC_CONVEX_URL);
+// Calls setupConvex() internally and keeps the Convex client authenticated.
+createSvelteAuthClient({ authClient });
 
 // Component with reactive queries
-import { useQuery, useConvexClient } from 'convex-svelte';
-import { api } from '../convex/_generated/api';
+import { useQuery, useConvexClient } from '@mmailaender/convex-svelte';
+import { api } from '$convex/_generated/api';
 
 let userId = $state<Id<'users'> | null>(null);
 const client = useConvexClient();

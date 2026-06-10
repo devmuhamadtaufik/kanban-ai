@@ -208,7 +208,7 @@ export const billingPortal = action({
 ### Loading Products
 
 ```typescript
-import { useConvexClient } from 'convex-svelte';
+import { useConvexClient } from '@mmailaender/convex-svelte';
 import { api } from '$convex/_generated/api.js';
 import { onMount } from 'svelte';
 
