@@ -1,5 +1,16 @@
 # Changelog
 
+## 2026-06-10 — Vite 8 (Rolldown-powered)
+
+Upgraded to [Vite 8](https://vite.dev/blog/announcing-vite8) (`^7` → `^8`), which
+ships [Rolldown](https://vite.dev/guide/rolldown) as its built-in default bundler —
+so Rolldown is used out of the box with no alias. (The separate `rolldown-vite`
+preview package, used in v6/v7, was merged into Vite core in v8 and is not needed.)
+
+This pulled the SvelteKit toolchain up to Vite-8-compatible versions:
+`@sveltejs/vite-plugin-svelte`, `svelte`, `@sveltejs/kit`, and `@tailwindcss/vite` /
+`tailwindcss`.
+
 ## 2026-06-10 — Better Auth / Convex dependency upgrade
 
 Upgraded the auth/data stack:

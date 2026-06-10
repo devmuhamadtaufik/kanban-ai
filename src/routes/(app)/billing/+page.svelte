@@ -52,10 +52,12 @@
 	// Get Convex client for actions (checkout/portal)
 	const client = useConvexClient();
 
-	// Get data from server load function
-	let products = $state<Product[]>(data.products || []);
+	// Derived from the server load data so they stay in sync if `data` changes
+	// (e.g. on client-side navigation / invalidation), rather than capturing only
+	// the initial value.
+	let products = $derived<Product[]>(data.products || []);
 	// customerData from autumn.customers.get() - nested under data.data
-	let customerData = $state<CustomerData | null>(data.customerData?.data?.data || null);
+	let customerData = $derived<CustomerData | null>(data.customerData?.data?.data || null);
 
 	async function handleCheckout(productId: string) {
 		try {
