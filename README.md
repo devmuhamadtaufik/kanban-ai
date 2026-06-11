@@ -27,6 +27,13 @@ A production-ready SaaS starter template built for the [Modern Stack Hackathon](
   - Avatar upload with Convex storage
   - Account information management
 
+- ✅ **Organizations & Multi-tenancy**
+  - Better Auth organization plugin with roles (owner/admin/member)
+  - Personal organization auto-created per user (B2C works out of the box)
+  - Organization switcher, settings page, member management
+  - Email invitations with accept/decline flow
+  - Billing scoped to the active organization
+
 - ✅ **UI Components**
   - Dashboard with charts and data tables
   - Sidebar navigation
@@ -47,7 +54,7 @@ A production-ready SaaS starter template built for the [Modern Stack Hackathon](
 Planned features and improvements:
 
 - [x] **OAuth Support** - Complete social provider integration and example with Google OAuth
-- [ ] **Multi-tenancy / Team Support** - Organizations, team invites, and role-based permissions
+- [x] **Multi-tenancy / Team Support** - Organizations, team invites, and role-based permissions
 - [ ] **GitHub Action for Cloudflare Workers** - Currently, only Cloudflare Pages deployment is fully functional
 - [ ] **Rate Limiting** - API rate limiting and request throttling
 - [ ] **Stripe Stats in Admin Dashboard** - Revenue analytics and subscription metrics
@@ -55,6 +62,16 @@ Planned features and improvements:
 - [ ] **E2E Tests with Playwright** - Comprehensive end-to-end testing suite
 
 ## Getting Started
+
+### Starting a new project from this template
+
+After cloning, make it yours:
+
+1. **Branding**: edit `src/lib/config.ts` (app name, description, links) — it feeds page titles, the sidebar brand, email subjects, and landing-page links.
+2. **Environment**: set the Convex env vars (`SITE_URL`, `RESEND_API_KEY`, `EMAIL_FROM`, `AUTUMN_SECRET_KEY`, Google OAuth credentials) — see the docs in `/docs`.
+3. **Assets**: replace `src/lib/assets/favicon.svg`.
+4. **Landing page**: rewrite the marketing copy in `src/routes/+page.svelte`.
+5. **Products**: define your plans in `autumn.config.ts` and push them with `pnpm dlx atmn push`.
 
 ### Prerequisites
 

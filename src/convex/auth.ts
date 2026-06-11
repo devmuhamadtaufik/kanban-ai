@@ -4,9 +4,12 @@ import { components } from './_generated/api';
 import { type DataModel } from './_generated/dataModel';
 import { query } from './_generated/server';
 import { betterAuth, type BetterAuthOptions } from 'better-auth';
-import { admin } from 'better-auth/plugins';
+import { admin, organization } from 'better-auth/plugins';
 import authSchema from './betterAuth/schema';
 import authConfig from './auth.config';
+import { actionEmailHtml, escapeHtml, sendEmail } from './email';
+import { siteConfig } from '../lib/config';
+import { slugifyOrganizationName } from '../lib/organizations';
 
 const siteUrl = process.env.SITE_URL!;
 
@@ -18,6 +21,29 @@ export const authComponent = createClient<DataModel, typeof authSchema>(componen
 	}
 });
 
+/**
+ * Every user gets a personal organization on sign-up. This keeps the data
+ * model uniform: billing and app data always hang off an organization, so
+ * the same template works for B2C (users stay in their personal org) and
+ * B2B (users create or join shared organizations).
+ */
+const createPersonalOrganization = async (
+	ctx: GenericCtx<DataModel>,
+	user: { id: string; name?: string | null; email: string }
+) => {
+	const auth = createAuth(ctx);
+	const slugBase = slugifyOrganizationName(user.name || user.email.split('@')[0]) || 'workspace';
+	return await auth.api.createOrganization({
+		body: {
+			name: user.name ? `${user.name}'s Workspace` : 'Personal Workspace',
+			slug: `${slugBase}-${crypto.randomUUID().slice(0, 8)}`,
+			metadata: { personal: true },
+			// Server-side call: create the organization on behalf of the new user.
+			userId: user.id
+		}
+	});
+};
+
 // Plain options factory — used both by `betterAuth()` at runtime and by
 // `createApi()` in the component adapter so it can introspect the schema.
 
@@ -25,52 +51,33 @@ export const createOptions = (ctx: GenericCtx<DataModel>) =>
 	({
 		baseURL: siteUrl,
 		database: authComponent.adapter(ctx),
+		advanced: {
+			database: {
+				// Convex generates document ids; without this, flows that generate
+				// ids up front (e.g. organization invitations) fail validation.
+				generateId: false
+			}
+		},
 		// User configuration
 		user: {
 			changeEmail: {
 				enabled: true,
-				// eslint-disable-next-line @typescript-eslint/no-unused-vars
-				sendChangeEmailConfirmation: async ({ user, newEmail, url, token }, _request) => {
-					const resendApiKey = process.env.RESEND_API_KEY;
-					const from = process.env.RESET_EMAIL_FROM || 'ModernStack SaaS <no-reply@yourdomain.com>';
-					if (!resendApiKey) {
-						console.error('RESEND_API_KEY not set. Unable to send email change confirmation.');
-						return;
-					}
-					try {
-						const res = await fetch('https://api.resend.com/emails', {
-							method: 'POST',
-							headers: {
-								'Content-Type': 'application/json',
-								Authorization: `Bearer ${resendApiKey}`
-							},
-							body: JSON.stringify({
-								from,
-								to: user.email,
-								subject: 'Approve email change',
-								...(process.env.RESET_EMAIL_REPLY_TO
-									? { reply_to: process.env.RESET_EMAIL_REPLY_TO }
-									: {}),
-								html: `<p>Hello ${user.name ?? 'there'},</p>
-<p>We received a request to change your email address to <strong>${newEmail}</strong>.</p>
-<p>Click the button below to approve this change:</p>
-<p><a href="${url}" style="display:inline-block;padding:10px 16px;background:#111827;color:#fff;border-radius:6px;text-decoration:none">Approve Email Change</a></p>
-<p>If the button doesn't work, copy and paste this URL into your browser:</p>
-<p><a href="${url}">${url}</a></p>
-<p>If you didn't request this change, please ignore this email or contact support.</p>`
-							})
-						});
-						if (!res.ok) {
-							const text = await res.text();
-							console.error(
-								'Resend API error sending email change confirmation:',
-								res.status,
-								text
-							);
-						}
-					} catch (e) {
-						console.error('Failed to send email change confirmation:', e);
-					}
+				sendChangeEmailConfirmation: async ({ user, newEmail, url }) => {
+					await sendEmail({
+						to: user.email,
+						subject: 'Approve email change',
+						html: actionEmailHtml({
+							greeting: `Hello ${escapeHtml(user.name ?? 'there')},`,
+							bodyLines: [
+								`We received a request to change your email address to <strong>${escapeHtml(newEmail)}</strong>.`,
+								'Click the button below to approve this change:'
+							],
+							ctaLabel: 'Approve Email Change',
+							ctaUrl: url,
+							footerLine:
+								"If you didn't request this change, please ignore this email or contact support."
+						})
+					});
 				}
 			}
 		},
@@ -79,45 +86,20 @@ export const createOptions = (ctx: GenericCtx<DataModel>) =>
 			enabled: true,
 			requireEmailVerification: false,
 			// Send password reset emails via Resend
-			// token and _request are available if you need custom templates or logging
-			// eslint-disable-next-line @typescript-eslint/no-unused-vars
-			sendResetPassword: async ({ user, url, token }, _request) => {
-				const resendApiKey = process.env.RESEND_API_KEY;
-				const from = process.env.RESET_EMAIL_FROM || 'ModernStack SaaS <no-reply@yourdomain.com>';
-				if (!resendApiKey) {
-					console.error('RESEND_API_KEY not set. Unable to send reset password email.');
-					return;
-				}
-				const resetUrl = url; // Better Auth provides the full URL with token
-				try {
-					const res = await fetch('https://api.resend.com/emails', {
-						method: 'POST',
-						headers: {
-							'Content-Type': 'application/json',
-							Authorization: `Bearer ${resendApiKey}`
-						},
-						body: JSON.stringify({
-							from,
-							to: user.email,
-							subject: 'Reset your password',
-							...(process.env.RESET_EMAIL_REPLY_TO
-								? { reply_to: process.env.RESET_EMAIL_REPLY_TO }
-								: {}),
-							html: `<p>Hello ${user.name ?? 'there'},</p>
-<p>We received a request to reset your password. Click the button below to set a new password:</p>
-<p><a href="${resetUrl}" style="display:inline-block;padding:10px 16px;background:#111827;color:#fff;border-radius:6px;text-decoration:none">Reset Password</a></p>
-<p>If the button doesn't work, copy and paste this URL into your browser:</p>
-<p><a href="${resetUrl}">${resetUrl}</a></p>
-<p>If you didn't request this, you can safely ignore this email.</p>`
-						})
-					});
-					if (!res.ok) {
-						const text = await res.text();
-						console.error('Resend API error sending reset email:', res.status, text);
-					}
-				} catch (e) {
-					console.error('Failed to send reset password email:', e);
-				}
+			sendResetPassword: async ({ user, url }) => {
+				await sendEmail({
+					to: user.email,
+					subject: 'Reset your password',
+					html: actionEmailHtml({
+						greeting: `Hello ${escapeHtml(user.name ?? 'there')},`,
+						bodyLines: [
+							'We received a request to reset your password. Click the button below to set a new password:'
+						],
+						ctaLabel: 'Reset Password',
+						ctaUrl: url,
+						footerLine: "If you didn't request this, you can safely ignore this email."
+					})
+				});
 			}
 		},
 		socialProviders: {
@@ -130,11 +112,81 @@ export const createOptions = (ctx: GenericCtx<DataModel>) =>
 					}
 				: {})
 		},
+		databaseHooks: {
+			user: {
+				create: {
+					after: async (user, hookCtx) => {
+						try {
+							const organization = await createPersonalOrganization(ctx, user);
+							// `create.after` hooks run after the sign-up transaction, so the
+							// first session already exists by now — backfill its active
+							// organization (the `session.create.before` hook below covers
+							// all subsequent sign-ins).
+							if (organization && hookCtx) {
+								await hookCtx.context.adapter.updateMany({
+									model: 'session',
+									where: [{ field: 'userId', value: user.id }],
+									update: { activeOrganizationId: organization.id }
+								});
+							}
+						} catch (e) {
+							// Don't fail sign-up if organization creation fails; the user
+							// can still create an organization manually.
+							console.error('Failed to create personal organization:', e);
+						}
+					}
+				}
+			},
+			session: {
+				create: {
+					// Sessions always start with an active organization so that
+					// org-scoped queries and billing have an unambiguous context.
+					before: async (session, hookCtx) => {
+						if (session.activeOrganizationId || !hookCtx) return;
+						const membership = await hookCtx.context.adapter.findOne<{
+							organizationId: string;
+						}>({
+							model: 'member',
+							where: [{ field: 'userId', value: session.userId }]
+						});
+						if (!membership) return;
+						return {
+							data: { ...session, activeOrganizationId: membership.organizationId }
+						};
+					}
+				}
+			}
+		},
 		plugins: [
 			// The Convex plugin is required for Convex compatibility
 			convex({ authConfig }),
 			// Admin plugin for roles/impersonation/banning APIs
-			admin()
+			admin(),
+			// Organizations with invitations; billing is scoped to the active organization
+			organization({
+				invitationExpiresIn: 60 * 60 * 24 * 7, // 7 days
+				// The template ships with email verification disabled; if you enable
+				// `requireEmailVerification` above, flip this to true as well so only
+				// verified addresses can view and accept invitations.
+				requireEmailVerificationOnInvitation: false,
+				sendInvitationEmail: async (data) => {
+					await sendEmail({
+						to: data.email,
+						subject: `Join ${data.organization.name} on ${siteConfig.name}`,
+						html: actionEmailHtml({
+							greeting: 'Hello,',
+							bodyLines: [
+								`<strong>${escapeHtml(data.inviter.user.name || data.inviter.user.email)}</strong> has invited you to join <strong>${escapeHtml(data.organization.name)}</strong>.`,
+								'This invitation expires in 7 days.'
+							],
+							ctaLabel: 'Accept Invitation',
+							ctaUrl: `${siteUrl}/accept-invitation/${data.id}`,
+							footerLine:
+								"If you weren't expecting this invitation, you can safely ignore this email."
+						})
+					});
+				}
+			})
 		]
 	}) satisfies BetterAuthOptions;
 

@@ -49,8 +49,8 @@ importers:
         specifier: ^3.9.0
         version: 3.9.0
       '@lucide/svelte':
-        specifier: ^0.544.0
-        version: 0.544.0(svelte@5.56.3(@typescript-eslint/types@8.44.1))
+        specifier: ^1.17.0
+        version: 1.17.0(svelte@5.56.3(@typescript-eslint/types@8.44.1))
       '@playwright/test':
         specifier: ^1.49.1
         version: 1.55.1
@@ -114,6 +114,9 @@ importers:
       lint-staged:
         specifier: ^16.2.1
         version: 16.2.1
+      mode-watcher:
+        specifier: ^1.1.0
+        version: 1.1.0(svelte@5.56.3(@typescript-eslint/types@8.44.1))
       prettier:
         specifier: ^3.4.2
         version: 3.6.2
@@ -123,6 +126,9 @@ importers:
       prettier-plugin-tailwindcss:
         specifier: ^0.6.11
         version: 0.6.14(prettier-plugin-svelte@3.4.0(prettier@3.6.2)(svelte@5.56.3(@typescript-eslint/types@8.44.1)))(prettier@3.6.2)
+      runed:
+        specifier: ^0.37.1
+        version: 0.37.1(@sveltejs/kit@2.64.0(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.56.3(@typescript-eslint/types@8.44.1))(vite@8.0.16(@types/node@22.18.6)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1)))(svelte@5.56.3(@typescript-eslint/types@8.44.1))(typescript@5.9.2)(vite@8.0.16(@types/node@22.18.6)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1)))(svelte@5.56.3(@typescript-eslint/types@8.44.1))(zod@4.4.3)
       svelte:
         specifier: ^5.56.3
         version: 5.56.3(@typescript-eslint/types@8.44.1)
@@ -130,8 +136,8 @@ importers:
         specifier: ^4.0.0
         version: 4.3.2(picomatch@4.0.4)(svelte@5.56.3(@typescript-eslint/types@8.44.1))(typescript@5.9.2)
       svelte-sonner:
-        specifier: ^1.0.5
-        version: 1.0.5(svelte@5.56.3(@typescript-eslint/types@8.44.1))
+        specifier: ^1.1.1
+        version: 1.1.1(svelte@5.56.3(@typescript-eslint/types@8.44.1))
       tailwind-merge:
         specifier: ^3.3.1
         version: 3.3.1
@@ -995,8 +1001,8 @@ packages:
   '@layerstack/utils@2.0.0-next.12':
     resolution: {integrity: sha512-fhGZUlSr3N+D44BYm37WKMGSEFyZBW+dwIqtGU8Cl54mR4TLQ/UwyGhdpgIHyH/x/8q1abE0fP0Dn6ZsrDE3BA==}
 
-  '@lucide/svelte@0.544.0':
-    resolution: {integrity: sha512-9f9O6uxng2pLB01sxNySHduJN3HTl5p0HDu4H26VR51vhZfiMzyOMe9Mhof3XAk4l813eTtl+/DYRvGyoRR+yw==}
+  '@lucide/svelte@1.17.0':
+    resolution: {integrity: sha512-q06YCFBN5CO8cd1ADmLCxWRVMVb7xxvHzqC0lvNoxGa+FLW6Cd1Y1AOxgbQk4Iwe68vkAMCRveNHint4WoaVKg==}
     peerDependencies:
       svelte: ^5
 
@@ -2436,6 +2442,11 @@ packages:
     resolution: {integrity: sha512-G6T0ZX48xgozx7587koeX9Ys2NYy6Gmv//P89sEte9V9whIapMNF4idKxnW2QtCcLiTWlb/wfCabAtAFWhhBow==}
     engines: {node: '>=16 || 14 >=14.17'}
 
+  mode-watcher@1.1.0:
+    resolution: {integrity: sha512-mUT9RRGPDYenk59qJauN1rhsIMKBmWA3xMF+uRwE8MW/tjhaDSCCARqkSuDTq8vr4/2KcAxIGVjACxTjdk5C3g==}
+    peerDependencies:
+      svelte: ^5.27.0
+
   mri@1.2.0:
     resolution: {integrity: sha512-tzzskb3bG8LvYGFF/mDTpq3jpI6Q9wc3LEmBaghu+DdCssd1FakN7Bc0hVNmEyGq1bq3RgfkCb3cmQLpNPOroA==}
     engines: {node: '>=4'}
@@ -2734,6 +2745,11 @@ packages:
     peerDependencies:
       svelte: ^5.7.0
 
+  runed@0.25.0:
+    resolution: {integrity: sha512-7+ma4AG9FT2sWQEA0Egf6mb7PBT2vHyuHail1ie8ropfSjvZGtEAx8YTmUjv/APCsdRRxEVvArNjALk9zFSOrg==}
+    peerDependencies:
+      svelte: ^5.7.0
+
   runed@0.28.0:
     resolution: {integrity: sha512-k2xx7RuO9hWcdd9f+8JoBeqWtYrm5CALfgpkg2YDB80ds/QE4w0qqu34A7fqiAwiBBSBQOid7TLxwxVC27ymWQ==}
     peerDependencies:
@@ -2885,8 +2901,8 @@ packages:
       svelte:
         optional: true
 
-  svelte-sonner@1.0.5:
-    resolution: {integrity: sha512-9dpGPFqKb/QWudYqGnEz93vuY+NgCEvyNvxoCLMVGw6sDN/3oVeKV1xiEirW2E1N3vJEyj5imSBNOGltQHA7mg==}
+  svelte-sonner@1.1.1:
+    resolution: {integrity: sha512-5cd3p7wa4cq0NsqslMwdlPb7x1JglEZ/GKrLePWNr5bCxR1nagAVrY01FRFrXfUGs41miLt3C327+8XJo5BzZw==}
     peerDependencies:
       svelte: ^5.0.0
 
@@ -3824,7 +3840,7 @@ snapshots:
       d3-time-format: 4.1.0
       lodash-es: 4.17.21
 
-  '@lucide/svelte@0.544.0(svelte@5.56.3(@typescript-eslint/types@8.44.1))':
+  '@lucide/svelte@1.17.0(svelte@5.56.3(@typescript-eslint/types@8.44.1))':
     dependencies:
       svelte: 5.56.3(@typescript-eslint/types@8.44.1)
 
@@ -5181,6 +5197,12 @@ snapshots:
     dependencies:
       brace-expansion: 2.0.2
 
+  mode-watcher@1.1.0(svelte@5.56.3(@typescript-eslint/types@8.44.1)):
+    dependencies:
+      runed: 0.25.0(svelte@5.56.3(@typescript-eslint/types@8.44.1))
+      svelte: 5.56.3(@typescript-eslint/types@8.44.1)
+      svelte-toolbelt: 0.7.1(svelte@5.56.3(@typescript-eslint/types@8.44.1))
+
   mri@1.2.0: {}
 
   mrmime@2.0.1: {}
@@ -5385,6 +5407,11 @@ snapshots:
       esm-env: 1.2.2
       svelte: 5.56.3(@typescript-eslint/types@8.44.1)
 
+  runed@0.25.0(svelte@5.56.3(@typescript-eslint/types@8.44.1)):
+    dependencies:
+      esm-env: 1.2.2
+      svelte: 5.56.3(@typescript-eslint/types@8.44.1)
+
   runed@0.28.0(svelte@5.56.3(@typescript-eslint/types@8.44.1)):
     dependencies:
       esm-env: 1.2.2
@@ -5548,7 +5575,7 @@ snapshots:
     optionalDependencies:
       svelte: 5.56.3(@typescript-eslint/types@8.44.1)
 
-  svelte-sonner@1.0.5(svelte@5.56.3(@typescript-eslint/types@8.44.1)):
+  svelte-sonner@1.1.1(svelte@5.56.3(@typescript-eslint/types@8.44.1)):
     dependencies:
       runed: 0.28.0(svelte@5.56.3(@typescript-eslint/types@8.44.1))
       svelte: 5.56.3(@typescript-eslint/types@8.44.1)

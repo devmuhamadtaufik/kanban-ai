@@ -7,10 +7,20 @@
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { Check } from '@lucide/svelte';
 
-	import { useConvexClient } from '@mmailaender/convex-svelte';
+	import { useConvexClient, useQuery } from '@mmailaender/convex-svelte';
+	import { showErrorToast } from '$lib/toast.js';
+	import { canManageOrganization } from '$lib/organizations.js';
 	import type { PageData } from './$types';
+	import { siteConfig } from '$lib/config.js';
 
 	const { data }: { data: PageData } = $props();
+
+	// Billing is scoped to the active organization. Members can view the
+	// current plan; only owners and admins can manage the subscription
+	// (also enforced server-side in convex/billing.ts).
+	const organizationResponse = useQuery(api.organizations.getActiveOrganization, {});
+	let organization = $derived(organizationResponse.data);
+	let canManageBilling = $derived(canManageOrganization(organization?.currentMemberRole));
 
 	interface Product {
 		id: string;
@@ -56,28 +66,30 @@
 	// (e.g. on client-side navigation / invalidation), rather than capturing only
 	// the initial value.
 	let products = $derived<Product[]>(data.products || []);
-	// customerData from autumn.customers.get() - nested under data.data
-	let customerData = $derived<CustomerData | null>(data.customerData?.data?.data || null);
+	// The Autumn customer for the active organization (null before first checkout)
+	let customerData = $derived<CustomerData | null>(data.customerData?.data ?? null);
 
 	async function handleCheckout(productId: string) {
 		try {
 			const result = await client.action(api.billing.checkout, { productId });
+			if (result?.error) throw new Error(result.error.message);
 			if (result?.data?.url) {
 				window.location.href = result.data.url;
 			}
 		} catch (error) {
-			console.error('Checkout error:', error);
+			showErrorToast(error, 'Failed to start checkout');
 		}
 	}
 
 	async function handleManageSubscription() {
 		try {
 			const result = await client.action(api.billing.billingPortal, {});
+			if (result?.error) throw new Error(result.error.message);
 			if (result?.data?.url) {
 				window.location.href = result.data.url;
 			}
 		} catch (error) {
-			console.error('Billing portal error:', error);
+			showErrorToast(error, 'Failed to open the billing portal');
 		}
 	}
 
@@ -145,7 +157,7 @@
 </script>
 
 <svelte:head>
-	<title>Billing | SaaS Template</title>
+	<title>Billing | {siteConfig.name}</title>
 </svelte:head>
 
 <!-- Header -->
@@ -164,7 +176,15 @@
 	<div class="flex-1 space-y-6 p-6 md:p-10">
 		<div>
 			<h2 class="text-2xl font-bold tracking-tight">Billing</h2>
-			<p class="text-muted-foreground">Manage your subscription and billing information.</p>
+			<p class="text-muted-foreground">
+				{#if organization}
+					Manage the subscription and billing information for <span class="font-medium"
+						>{organization.name}</span
+					>.
+				{:else}
+					Manage your subscription and billing information.
+				{/if}
+			</p>
 		</div>
 
 		<Separator />
@@ -195,58 +215,71 @@
 						</ul>
 					</Card.Content>
 					<Card.Footer>
-						<Button variant="outline" onclick={handleManageSubscription}>Manage Subscription</Button
-						>
+						{#if canManageBilling}
+							<Button variant="outline" onclick={handleManageSubscription}>
+								Manage Subscription
+							</Button>
+						{:else}
+							<p class="text-sm text-muted-foreground">
+								Contact an organization owner or admin to manage the subscription.
+							</p>
+						{/if}
 					</Card.Footer>
 				</Card.Root>
 			{:else}
 				<Card.Root>
 					<Card.Header>
 						<Card.Title>No Active Plan</Card.Title>
-						<Card.Description>Choose a plan below to get started</Card.Description>
+						<Card.Description>
+							{canManageBilling
+								? 'Choose a plan below to get started'
+								: 'Contact an organization owner or admin to choose a plan.'}
+						</Card.Description>
 					</Card.Header>
 				</Card.Root>
 			{/if}
 		</div>
 
-		<!-- Available Plans Section -->
-		<div class="space-y-4">
-			<h3 class="text-lg font-semibold">Available Plans</h3>
-			<div class="grid gap-6 md:grid-cols-2">
-				{#each plans as plan (plan.id)}
-					<Card.Root class="relative">
-						{#if plan.isCurrent}
-							<Badge class="absolute top-4 right-4">Current Plan</Badge>
-						{/if}
-						<Card.Header>
-							<Card.Title>{plan.name}</Card.Title>
-							<Card.Description>
-								<span class="text-3xl font-bold">${plan.price}</span>
-								<span class="text-muted-foreground">/{plan.interval}</span>
-							</Card.Description>
-						</Card.Header>
-						<Card.Content>
-							<ul class="space-y-2">
-								{#each plan.features as feature, i (i)}
-									<li class="flex items-center gap-2">
-										<Check class="h-4 w-4 text-primary" />
-										<span class="text-sm">{feature}</span>
-									</li>
-								{/each}
-							</ul>
-						</Card.Content>
-						<Card.Footer>
+		<!-- Available Plans Section (owners and admins only) -->
+		{#if canManageBilling}
+			<div class="space-y-4">
+				<h3 class="text-lg font-semibold">Available Plans</h3>
+				<div class="grid gap-6 md:grid-cols-2">
+					{#each plans as plan (plan.id)}
+						<Card.Root class="relative">
 							{#if plan.isCurrent}
-								<Button variant="outline" disabled class="w-full">Current Plan</Button>
-							{:else}
-								<Button class="w-full" onclick={() => handleCheckout(plan.id)}>
-									{plan.price === 0 ? 'Downgrade' : 'Upgrade'}
-								</Button>
+								<Badge class="absolute top-4 right-4">Current Plan</Badge>
 							{/if}
-						</Card.Footer>
-					</Card.Root>
-				{/each}
+							<Card.Header>
+								<Card.Title>{plan.name}</Card.Title>
+								<Card.Description>
+									<span class="text-3xl font-bold">${plan.price}</span>
+									<span class="text-muted-foreground">/{plan.interval}</span>
+								</Card.Description>
+							</Card.Header>
+							<Card.Content>
+								<ul class="space-y-2">
+									{#each plan.features as feature, i (i)}
+										<li class="flex items-center gap-2">
+											<Check class="h-4 w-4 text-primary" />
+											<span class="text-sm">{feature}</span>
+										</li>
+									{/each}
+								</ul>
+							</Card.Content>
+							<Card.Footer>
+								{#if plan.isCurrent}
+									<Button variant="outline" disabled class="w-full">Current Plan</Button>
+								{:else}
+									<Button class="w-full" onclick={() => handleCheckout(plan.id)}>
+										{plan.price === 0 ? 'Downgrade' : 'Upgrade'}
+									</Button>
+								{/if}
+							</Card.Footer>
+						</Card.Root>
+					{/each}
+				</div>
 			</div>
-		</div>
+		{/if}
 	</div>
 </div>

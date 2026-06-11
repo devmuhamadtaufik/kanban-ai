@@ -21,6 +21,9 @@ When working on authentication-related tasks, always refer to these official doc
 - **Admin Plugin**: Documentation for the admin plugin functionality.
   - [Better Auth - Admin Plugin](https://www.better-auth.com/docs/plugins/admin)
 
+- **Organization Plugin**: Documentation for organizations, members, and invitations.
+  - [Better Auth - Organization Plugin](https://www.better-auth.com/docs/plugins/organization)
+
 - **Google OAuth**: Documentation for setting up Google Sign-In.
   - [Better Auth - Google OAuth](https://www.better-auth.com/docs/authentication/google)
 
@@ -56,6 +59,38 @@ Notes:
 - The CLI introspects the **installed** Better Auth instance (via `betterAuth/auth.ts`), so it emits fields matching your current `better-auth` version and plugins even if the CLI's own version differs.
 - The generator does not match our Prettier style, hence the `prettier --write` step.
 - `pnpm convex dev` then picks up the new `schema.ts`, regenerates `_generated/`, and pushes the migration. Commit the resulting `schema.ts` and `_generated/` changes together.
+
+## Organizations
+
+The template uses the Better Auth [organization plugin](https://www.better-auth.com/docs/plugins/organization) as the single tenancy primitive. Billing (Autumn) and any org-scoped app data hang off the **active organization**, never directly off the user.
+
+### Personal organization per user
+
+Every user gets a personal organization automatically on sign-up (see the `databaseHooks` in `src/convex/auth.ts`):
+
+- `user.create.after` creates a `"<Name>'s Workspace"` organization with `metadata: { personal: true }` and the user as `owner`, then backfills `activeOrganizationId` onto the sign-up session (Better Auth runs `create.after` hooks after the sign-up transaction, so the first session already exists at that point).
+- `session.create.before` sets `activeOrganizationId` to the user's first membership on every subsequent sign-in.
+
+This keeps the data model uniform: a pure B2C product just never surfaces the org UI (users stay in their personal workspace), while B2B products get team workspaces, invitations, and roles for free. Personal organizations cannot be deleted or left (enforced in the UI via `isPersonalOrganization` in `src/lib/organizations.ts`).
+
+### Where things live
+
+| Concern                                                        | Location                                                                      |
+| -------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| Plugin config, personal-org hooks, invitation email            | `src/convex/auth.ts`                                                          |
+| Active-org resolution + reactive `getActiveOrganization` query | `src/convex/organizations.ts`                                                 |
+| Client helpers (`isPersonalOrganization`, roles, slugs)        | `src/lib/organizations.ts`                                                    |
+| Org switcher + create dialog (sidebar)                         | `src/lib/components/org-switcher.svelte`, `create-organization-dialog.svelte` |
+| Org settings page (general, members, invites, danger)          | `src/routes/(app)/organization/`                                              |
+| Invitation landing page                                        | `src/routes/accept-invitation/[id]/`                                          |
+
+Client-side org CRUD goes through `authClient.organization.*` (create, setActive, inviteMember, updateMemberRole, …); reactive reads of the active organization go through the Convex query `api.organizations.getActiveOrganization`, which updates in real time when members or invitations change.
+
+### Convex-specific gotchas
+
+- `advanced.database.generateId: false` is required in the auth options. Convex generates document ids; without it, flows that pre-generate ids (e.g. organization invitations) fail the component's argument validation.
+- Because ids are database-generated, Better Auth defaults `requireEmailVerificationOnInvitation` to `true`. The template disables it to match its relaxed `requireEmailVerification: false` default — if you enable email verification, flip both flags.
+- After adding/removing Better Auth plugins, regenerate the local component schema (see below). The organization plugin adds `organization`, `member`, and `invitation` tables plus `session.activeOrganizationId`.
 
 ## Google OAuth Setup
 

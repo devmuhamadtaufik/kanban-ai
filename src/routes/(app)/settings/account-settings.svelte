@@ -5,6 +5,7 @@
 	import { Label } from '$lib/components/ui/label/index.js';
 	import * as Card from '$lib/components/ui/card/index.js';
 	import { toast } from 'svelte-sonner';
+	import { showErrorToast } from '$lib/toast.js';
 	import { api } from '$convex/_generated/api.js';
 	import { useConvexClient } from '@mmailaender/convex-svelte';
 	import { Upload } from '@lucide/svelte';
@@ -87,8 +88,7 @@
 
 			toast.success('Image uploaded successfully');
 		} catch (error) {
-			const message = error instanceof Error ? error.message : 'Failed to upload image';
-			toast.error(message);
+			showErrorToast(error, 'Failed to upload image');
 		} finally {
 			isLoading = false;
 		}
@@ -105,8 +105,7 @@
 			image = '';
 			toast.success('Profile picture removed');
 		} catch (error) {
-			const message = error instanceof Error ? error.message : 'Failed to remove image';
-			toast.error(message);
+			showErrorToast(error, 'Failed to remove image');
 		} finally {
 			isLoading = false;
 		}
@@ -124,8 +123,7 @@
 
 			toast.success('Profile updated successfully');
 		} catch (error) {
-			const message = error instanceof Error ? error.message : 'Failed to update profile';
-			toast.error(message);
+			showErrorToast(error, 'Failed to update profile');
 		} finally {
 			isLoading = false;
 		}

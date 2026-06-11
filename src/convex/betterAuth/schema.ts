@@ -3,7 +3,7 @@
  * To regenerate the schema, from your project root:
  *
  *   cd src/convex/betterAuth
- *   npx @better-auth/cli generate --output schema.ts -y
+ *   npx auth generate --output schema.ts
  *
  * To customize the schema, generate to an alternate file and import
  * the table definitions to your schema file. See
@@ -38,7 +38,8 @@ export const tables = {
 		ipAddress: v.optional(v.union(v.null(), v.string())),
 		userAgent: v.optional(v.union(v.null(), v.string())),
 		userId: v.string(),
-		impersonatedBy: v.optional(v.union(v.null(), v.string()))
+		impersonatedBy: v.optional(v.union(v.null(), v.string())),
+		activeOrganizationId: v.optional(v.union(v.null(), v.string()))
 	})
 		.index('expiresAt', ['expiresAt'])
 		.index('expiresAt_userId', ['expiresAt', 'userId'])
@@ -76,7 +77,39 @@ export const tables = {
 		privateKey: v.string(),
 		createdAt: v.number(),
 		expiresAt: v.optional(v.union(v.null(), v.number()))
+	}),
+	organization: defineTable({
+		name: v.string(),
+		slug: v.string(),
+		logo: v.optional(v.union(v.null(), v.string())),
+		createdAt: v.number(),
+		metadata: v.optional(v.union(v.null(), v.string()))
 	})
+		.index('name', ['name'])
+		.index('slug', ['slug']),
+	member: defineTable({
+		organizationId: v.string(),
+		userId: v.string(),
+		role: v.string(),
+		createdAt: v.number()
+	})
+		.index('organizationId', ['organizationId'])
+		.index('userId', ['userId'])
+		.index('role', ['role']),
+	invitation: defineTable({
+		organizationId: v.string(),
+		email: v.string(),
+		role: v.optional(v.union(v.null(), v.string())),
+		status: v.string(),
+		expiresAt: v.number(),
+		createdAt: v.number(),
+		inviterId: v.string()
+	})
+		.index('organizationId', ['organizationId'])
+		.index('email', ['email'])
+		.index('role', ['role'])
+		.index('status', ['status'])
+		.index('inviterId', ['inviterId'])
 };
 
 const schema = defineSchema(tables);

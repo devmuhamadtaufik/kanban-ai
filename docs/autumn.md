@@ -54,21 +54,25 @@ Create `convex/autumn.ts` to initialize the Autumn client and define customer id
 ```typescript
 import { components } from './_generated/api';
 import { Autumn } from '@useautumn/convex';
-import { authComponent } from './auth';
+import { resolveActiveOrganization } from './organizations';
 
 export const autumn = new Autumn(components.autumn, {
 	secretKey: process.env.AUTUMN_SECRET_KEY ?? '',
+	// Billing is scoped to the active organization, not the user. Every user
+	// gets a personal organization on sign-up, so this works unchanged for
+	// B2C (personal org = the customer) and B2B (shared org = the customer).
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	identify: async (ctx: any) => {
 		try {
-			const user = await authComponent.getAuthUser(ctx);
-			if (!user) return null;
+			const resolved = await resolveActiveOrganization(ctx);
+			if (!resolved) return null;
 
 			return {
-				customerId: user._id,
+				customerId: resolved.organization.id,
 				customerData: {
-					name: user.name ?? '',
-					email: user.email ?? ''
+					name: resolved.organization.name,
+					// Billing contact: the member currently acting on behalf of the org
+					email: resolved.session.user.email
 				}
 			};
 		} catch {
@@ -78,31 +82,20 @@ export const autumn = new Autumn(components.autumn, {
 	}
 });
 
-export const {
-	track,
-	cancel,
-	query,
-	attach,
-	check,
-	checkout,
-	usage,
-	setupPayment,
-	createCustomer,
-	listProducts,
-	billingPortal,
-	createReferralCode,
-	redeemReferralCode,
-	createEntity,
-	getEntity
-} = autumn.api();
+// Only member-safe operations are exposed as public Convex functions.
+// Subscription-mutating operations (checkout, attach, cancel, billing portal,
+// …) go through `billing.ts`, which checks the caller's organization role via
+// the Autumn instance methods (e.g. `autumn.checkout(ctx, args)`).
+export const { track, check, usage, query, listProducts } = autumn.api();
 ```
 
 **Key Points:**
 
-- The `identify` function maps authenticated users to Autumn customers
-- Use the Convex user's `_id` as the `customerId` for consistency
+- The `identify` function maps the **active organization** (from the Better Auth organization plugin) to the Autumn customer
+- Use the Better Auth organization `id` as the `customerId`; the subscription follows the organization, so all members share it and switching organizations switches the billing context
+- Every user has a personal organization (auto-created on sign-up), so B2C apps work without any extra setup
 - Catch authentication errors gracefully - unauthenticated users can still view products
-- Export all Autumn API methods for use in other Convex functions
+- Only export member-safe API methods publicly; subscription-mutating operations are wrapped in `billing.ts` actions that require the `owner` or `admin` organization role
 
 ## Product Configuration
 
