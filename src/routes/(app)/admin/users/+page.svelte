@@ -13,7 +13,7 @@
 	import { Label } from '$lib/components/ui/label/index.js';
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import * as Select from '$lib/components/ui/select/index.js';
-	import { UserPlus, Ban, Trash2 } from '@lucide/svelte';
+	import { UserPlus, Ban, Trash2, VenetianMask } from '@lucide/svelte';
 	import { toast } from 'svelte-sonner';
 	import { authClient } from '$lib/auth-client';
 
@@ -185,6 +185,25 @@
 		showDeleteDialog = true;
 	}
 
+	async function handleImpersonate(userId: string) {
+		try {
+			const { error } = await authClient.admin.impersonateUser({ userId });
+
+			if (error) {
+				throw new Error(error.message);
+			}
+
+			// Refresh the convex_jwt cookie for the impersonated session — it's
+			// only re-issued on get-session, and SSR loads read it directly
+			await authClient.getSession({ query: { disableCookieCache: true } });
+			// Full reload so the Convex client and all queries pick up the
+			// impersonated session ("Stop impersonating" lives in the user menu)
+			window.location.assign('/dashboard');
+		} catch (error) {
+			toast.error('Failed to impersonate user: ' + (error as Error).message);
+		}
+	}
+
 	async function handleDeleteUser() {
 		if (!userToDelete) return;
 
@@ -300,6 +319,25 @@
 							<Table.Cell class="text-right">
 								<Tooltip.Provider>
 									<div class="flex justify-end gap-2">
+										<Tooltip.Root>
+											<Tooltip.Trigger>
+												<Button
+													variant="outline"
+													size="sm"
+													onclick={() => handleImpersonate(user.id)}
+													disabled={user.id === currentUser?._id}
+												>
+													<VenetianMask class="h-4 w-4" />
+												</Button>
+											</Tooltip.Trigger>
+											<Tooltip.Content>
+												<p>
+													{user.id === currentUser?._id
+														? 'Cannot impersonate yourself'
+														: 'Impersonate this user'}
+												</p>
+											</Tooltip.Content>
+										</Tooltip.Root>
 										{#if user.banned}
 											<Tooltip.Root>
 												<Tooltip.Trigger>

@@ -8,7 +8,7 @@
 		Folder,
 		CircleQuestionMark,
 		Box,
-		ChartLine,
+		Building2,
 		Settings,
 		Users,
 		CreditCard
@@ -146,9 +146,9 @@
 				icon: Users
 			},
 			{
-				name: 'Analytics',
-				url: '#',
-				icon: ChartLine
+				name: 'Organizations',
+				url: '/admin/organizations',
+				icon: Building2
 			}
 		]
 	}));
