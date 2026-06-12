@@ -79,7 +79,7 @@
 			billing = {
 				customerExists: Boolean(result?.data),
 				products: (result?.data?.products ?? []).map(
-					(product: { name?: string; id: string; status: string }) => ({
+					(product: { name?: string | null; id: string; status: string }) => ({
 						name: product.name ?? product.id,
 						status: product.status
 					})

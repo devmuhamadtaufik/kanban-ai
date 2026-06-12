@@ -32,21 +32,28 @@ async function requireBillingManager(ctx: GenericCtx<DataModel>) {
 	return resolved;
 }
 
+// Errors are returned as plain { message, code } values so the result is
+// Convex-serializable and the UI can show them directly.
+const billingErrorValidator = v.union(
+	v.null(),
+	v.object({ message: v.string(), code: v.string() })
+);
+
 // Get customer subscription data for the active organization. Readable by
 // any member; a customer that doesn't exist yet (no checkout) is `null`.
 export const getCustomer = action({
 	args: {},
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	handler: async (ctx): Promise<any> => {
+	returns: v.object({ data: v.any(), error: billingErrorValidator }),
+	handler: async (ctx) => {
 		const resolved = await resolveActiveOrganization(ctx);
 		if (!resolved) {
-			return { data: null, error: 'No active organization' };
+			return { data: null, error: { message: 'No active organization', code: 'no_organization' } };
 		}
 
 		const { data, error } = await autumn.customers.get(ctx);
 		if (error && error.code !== 'customer_not_found') {
 			console.error('Error getting customer:', error);
-			return { data: null, error: error.message };
+			return { data: null, error: { message: error.message, code: error.code } };
 		}
 		return { data: data ?? null, error: null };
 	}
@@ -73,21 +80,29 @@ async function ensureCustomer(
 // Checkout for the active organization; creates the customer on first use
 export const checkout = action({
 	args: { productId: v.string() },
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	handler: async (ctx, args): Promise<any> => {
+	returns: v.object({ data: v.any(), error: billingErrorValidator }),
+	handler: async (ctx, args) => {
 		const resolved = await requireBillingManager(ctx);
 		await ensureCustomer(ctx, resolved);
-		return await autumn.checkout(ctx, { productId: args.productId });
+		const { data, error } = await autumn.checkout(ctx, { productId: args.productId });
+		return {
+			data: data ?? null,
+			error: error ? { message: error.message, code: error.code } : null
+		};
 	}
 });
 
 // Billing portal for the active organization; creates the customer on first use
 export const billingPortal = action({
 	args: {},
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	handler: async (ctx): Promise<any> => {
+	returns: v.object({ data: v.any(), error: billingErrorValidator }),
+	handler: async (ctx) => {
 		const resolved = await requireBillingManager(ctx);
 		await ensureCustomer(ctx, resolved);
-		return await autumn.customers.billingPortal(ctx, {});
+		const { data, error } = await autumn.customers.billingPortal(ctx, {});
+		return {
+			data: data ?? null,
+			error: error ? { message: error.message, code: error.code } : null
+		};
 	}
 });

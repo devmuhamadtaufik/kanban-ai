@@ -4,12 +4,14 @@ import { components } from './_generated/api';
 import { type DataModel } from './_generated/dataModel';
 import { query } from './_generated/server';
 import { betterAuth, type BetterAuthOptions } from 'better-auth';
+import { APIError } from 'better-auth/api';
 import { admin, organization } from 'better-auth/plugins';
+import { Autumn } from 'autumn-js';
 import authSchema from './betterAuth/schema';
 import authConfig from './auth.config';
 import { actionEmailHtml, escapeHtml, sendEmail } from './email';
 import { siteConfig } from '../lib/config';
-import { slugifyOrganizationName } from '../lib/organizations';
+import { isPersonalOrganization, slugifyOrganizationName } from '../lib/organizations';
 
 const siteUrl = process.env.SITE_URL!;
 
@@ -169,6 +171,31 @@ export const createOptions = (ctx: GenericCtx<DataModel>) =>
 				// `requireEmailVerification` above, flip this to true as well so only
 				// verified addresses can view and accept invitations.
 				requireEmailVerificationOnInvitation: false,
+				organizationHooks: {
+					beforeDeleteOrganization: async ({ organization }) => {
+						// The personal workspace is the fallback billing/data scope for
+						// every user, so it can never be deleted. The UI hides the
+						// option, but the public API must enforce it too.
+						if (isPersonalOrganization(organization)) {
+							throw new APIError('BAD_REQUEST', {
+								message: 'Personal workspaces cannot be deleted'
+							});
+						}
+						// Clean up billing before the organization disappears. Failing
+						// here aborts the deletion rather than orphaning a paid
+						// subscription.
+						const secretKey = process.env.AUTUMN_SECRET_KEY;
+						if (!secretKey) return;
+						const autumn = new Autumn({ secretKey });
+						const { error } = await autumn.customers.delete(organization.id);
+						if (error && error.code !== 'customer_not_found') {
+							console.error('Failed to delete Autumn customer:', error);
+							throw new APIError('INTERNAL_SERVER_ERROR', {
+								message: "Failed to cancel the organization's subscription"
+							});
+						}
+					}
+				},
 				sendInvitationEmail: async (data) => {
 					await sendEmail({
 						to: data.email,

@@ -1,5 +1,20 @@
 # Changelog
 
+## 2026-06-12 — Organizations, org-scoped billing & admin impersonation
+
+Added multi-tenancy via the Better Auth organization plugin, with billing scoped
+to the active organization instead of the user.
+
+- **Organizations**: every user gets a personal workspace on sign-up (so B2C
+  works unchanged), plus org switcher, settings page (rename, members, roles),
+  email invitations, and an accept-invitation flow.
+- **Org-scoped billing**: Autumn is keyed on the active organization; subscription
+  changes are restricted to owners/admins, with members getting a read-only view.
+  Deleting an organization cancels its subscription; personal workspaces can't be
+  deleted (enforced server-side).
+- **Admin**: new `/admin/organizations` page (list, search, detail with members +
+  billing) and user impersonation from `/admin/users`.
+
 ## 2026-06-10 — Vite 8 (Rolldown-powered)
 
 Upgraded to [Vite 8](https://vite.dev/blog/announcing-vite8) (`^7` → `^8`), which

@@ -3,7 +3,9 @@
  */
 
 interface OrganizationLike {
-	metadata?: Record<string, unknown> | string | null;
+	// Better Auth stores metadata as a JSON string but returns it parsed in
+	// some APIs; accept anything and normalize defensively.
+	metadata?: unknown;
 }
 
 export function parseOrganizationMetadata(organization: OrganizationLike): Record<string, unknown> {
@@ -16,7 +18,10 @@ export function parseOrganizationMetadata(organization: OrganizationLike): Recor
 			return {};
 		}
 	}
-	return metadata;
+	if (typeof metadata === 'object') {
+		return metadata as Record<string, unknown>;
+	}
+	return {};
 }
 
 /**

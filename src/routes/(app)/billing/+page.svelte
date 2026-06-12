@@ -10,6 +10,7 @@
 	import { useConvexClient, useQuery } from '@mmailaender/convex-svelte';
 	import { showErrorToast } from '$lib/toast.js';
 	import { canManageOrganization } from '$lib/organizations.js';
+	import type { Customer } from 'autumn-js';
 	import type { PageData } from './$types';
 	import { siteConfig } from '$lib/config.js';
 
@@ -42,23 +43,6 @@
 		isCurrent: boolean;
 	}
 
-	interface CustomerProduct {
-		id: string;
-		name: string;
-		status: string;
-		items?: Array<{
-			type: string;
-			feature_id?: string;
-			price?: number;
-			interval?: string;
-			included_usage?: number;
-		}>;
-	}
-
-	interface CustomerData {
-		products?: CustomerProduct[];
-	}
-
 	// Get Convex client for actions (checkout/portal)
 	const client = useConvexClient();
 
@@ -66,8 +50,9 @@
 	// (e.g. on client-side navigation / invalidation), rather than capturing only
 	// the initial value.
 	let products = $derived<Product[]>(data.products || []);
-	// The Autumn customer for the active organization (null before first checkout)
-	let customerData = $derived<CustomerData | null>(data.customerData?.data ?? null);
+	// The Autumn customer for the active organization (null before first checkout),
+	// typed by autumn-js via the api.billing.getCustomer return type
+	let customerData = $derived<Customer | null>(data.customerData?.data ?? null);
 
 	async function handleCheckout(productId: string) {
 		try {
@@ -120,7 +105,7 @@
 
 		return {
 			id: activeCustomerProduct.id,
-			name: activeCustomerProduct.name,
+			name: activeCustomerProduct.name ?? activeCustomerProduct.id,
 			price: priceItem?.price || 0,
 			interval: priceItem?.interval || 'month',
 			features: [

@@ -2,10 +2,10 @@ import { action, query } from './_generated/server';
 import { ConvexError, v } from 'convex/values';
 import { paginationOptsValidator } from 'convex/server';
 import { Autumn } from 'autumn-js';
-import { components } from './_generated/api';
 import { type DataModel } from './_generated/dataModel';
 import { type GenericCtx } from '@convex-dev/better-auth';
 import { authComponent } from './auth';
+import { findMany, findOne } from './authAdapter';
 
 /**
  * Admin-only queries over Better Auth's organization tables.
@@ -25,29 +25,6 @@ async function requireAdmin(ctx: GenericCtx<DataModel>) {
 	}
 	return user;
 }
-
-interface Where {
-	field: string;
-	value: string | number | boolean | string[] | number[] | null;
-	operator?: 'eq' | 'ne' | 'in' | 'contains' | 'starts_with' | 'ends_with';
-	mode?: 'sensitive' | 'insensitive';
-}
-
-type AuthModel = 'user' | 'organization' | 'member' | 'invitation';
-
-// Convenience wrappers over the Better Auth component adapter
-const findMany = async (
-	ctx: GenericCtx<DataModel>,
-	args: {
-		model: AuthModel;
-		where?: Where[];
-		sortBy?: { field: string; direction: 'asc' | 'desc' };
-		paginationOpts: { numItems: number; cursor: string | null };
-	}
-) => await ctx.runQuery(components.betterAuth.adapter.findMany, args);
-
-const findOne = async (ctx: GenericCtx<DataModel>, args: { model: AuthModel; where: Where[] }) =>
-	await ctx.runQuery(components.betterAuth.adapter.findOne, args);
 
 const organizationSummaryValidator = v.object({
 	id: v.string(),
@@ -227,13 +204,16 @@ export const getOrganization = query({
 // caller's own active organization.
 export const getOrganizationBilling = action({
 	args: { organizationId: v.string() },
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	handler: async (ctx, args): Promise<any> => {
+	returns: v.object({
+		data: v.any(),
+		error: v.union(v.null(), v.object({ message: v.string(), code: v.string() }))
+	}),
+	handler: async (ctx, args) => {
 		await requireAdmin(ctx);
 		const autumn = new Autumn({ secretKey: process.env.AUTUMN_SECRET_KEY ?? '' });
 		const { data, error } = await autumn.customers.get(args.organizationId);
 		if (error && error.code !== 'customer_not_found') {
-			return { data: null, error: error.message };
+			return { data: null, error: { message: error.message, code: error.code } };
 		}
 		return { data: data ?? null, error: null };
 	}
