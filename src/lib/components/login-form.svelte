@@ -15,11 +15,18 @@
 		redirectTo?: string;
 	}
 
+	function normalizeRedirect(path: string): string {
+		return path.startsWith('/') && !path.startsWith('//') ? path : '/dashboard';
+	}
+
 	const { id, mode = 'signin', redirectTo = '/dashboard' }: Props = $props();
+	const validatedRedirectTo = $derived(normalizeRedirect(redirectTo));
 
 	// Preserve the redirect when switching between sign-in and sign-up
 	const redirectQuery = $derived(
-		redirectTo !== '/dashboard' ? `?redirect=${encodeURIComponent(redirectTo)}` : ''
+		validatedRedirectTo !== '/dashboard'
+			? `?redirect=${encodeURIComponent(validatedRedirectTo)}`
+			: ''
 	);
 
 	const authEmailCtx = getContext<{ get: () => string; set: (v: string) => void }>('auth:email');
@@ -47,7 +54,7 @@
 					{
 						onSuccess: () => {
 							// eslint-disable-next-line svelte/no-navigation-without-resolve
-							goto(redirectTo);
+							goto(validatedRedirectTo);
 						},
 						onError: (ctx) => {
 							error = ctx.error.message;
@@ -60,7 +67,7 @@
 					{
 						onSuccess: () => {
 							// eslint-disable-next-line svelte/no-navigation-without-resolve
-							goto(redirectTo);
+							goto(validatedRedirectTo);
 						},
 						onError: (ctx) => {
 							error = ctx.error.message;
@@ -80,7 +87,7 @@
 		try {
 			await authClient.signIn.social({
 				provider: 'google',
-				callbackURL: redirectTo
+				callbackURL: validatedRedirectTo
 			});
 		} catch (err) {
 			error = 'Failed to sign in with Google';

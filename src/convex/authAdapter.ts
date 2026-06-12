@@ -55,15 +55,21 @@ export const countOwnedOrganizations = async (
 	ctx: GenericCtx<DataModel>,
 	userId: string
 ): Promise<number> => {
-	const memberships = await findMany(ctx, {
-		model: 'member',
-		where: [{ field: 'userId', value: userId }],
-		paginationOpts: { numItems: 200, cursor: null }
-	});
-	return memberships.page.filter(
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		(member: any) => normalizeOrganizationRoles(member.role).includes('owner')
-	).length;
+	let cursor: string | null = null;
+	let count = 0;
+	do {
+		const memberships = await findMany(ctx, {
+			model: 'member',
+			where: [{ field: 'userId', value: userId }],
+			paginationOpts: { numItems: 200, cursor }
+		});
+		count += memberships.page.filter(
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			(member: any) => normalizeOrganizationRoles(member.role).includes('owner')
+		).length;
+		cursor = memberships.isDone ? null : memberships.continueCursor || null;
+	} while (cursor);
+	return count;
 };
 
 type UpdateManyInput = FunctionArgs<typeof components.betterAuth.adapter.updateMany>['input'];

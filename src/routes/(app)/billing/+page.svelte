@@ -92,9 +92,8 @@
 	let currentPlan = $derived.by<Plan | null>(() => {
 		if (!customerData?.products || activeProductIds.length === 0) return null;
 
-		// Get the active product from customer data
 		const activeCustomerProduct = customerData.products.find(
-			(p) => p.status === 'active' && activeProductIds.includes(p.id)
+			(product) => product.status === 'active' && activeProductIds.includes(product.id)
 		);
 		if (!activeCustomerProduct) return null;
 

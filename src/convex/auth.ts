@@ -31,11 +31,21 @@ async function createAutumnCustomerForOrganization({
 	if (!secretKey) return;
 
 	const autumn = new Autumn({ secretKey });
-	const { error } = await autumn.customers.create({
+	const customer = {
 		id: organization.id,
 		name: organization.name,
 		email: user.email
+	};
+	const created = await autumn.customers.create(customer);
+	if (!created.error) return;
+
+	const updated = await autumn.customers.update(customer.id, {
+		name: customer.name,
+		email: customer.email
 	});
+	if (!updated.error) return;
+
+	const error = updated.error ?? created.error;
 	if (error) {
 		// Don't throw from afterCreateOrganization: Better Auth has already
 		// persisted the org/member rows by then, so throwing would fail the

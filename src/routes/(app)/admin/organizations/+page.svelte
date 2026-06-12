@@ -72,6 +72,7 @@
 		isBillingLoading = true;
 		try {
 			const result = await client.action(api.admin.getOrganizationBilling, { organizationId });
+			if (selectedOrganizationId !== organizationId) return;
 			billing = {
 				customerExists: Boolean(result?.data),
 				products: (result?.data?.products ?? []).map(
@@ -82,9 +83,12 @@
 				)
 			};
 		} catch (error) {
+			if (selectedOrganizationId !== organizationId) return;
 			showErrorToast(error, 'Failed to load billing information');
 		} finally {
-			isBillingLoading = false;
+			if (selectedOrganizationId === organizationId) {
+				isBillingLoading = false;
+			}
 		}
 	}
 

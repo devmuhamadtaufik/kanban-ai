@@ -1,5 +1,3 @@
-import { siteConfig } from '../lib/config';
-
 /**
  * Shared transactional email helpers (Resend).
  *
@@ -23,13 +21,13 @@ interface SendEmailArgs {
  */
 export async function sendEmail({ to, subject, html }: SendEmailArgs): Promise<void> {
 	const resendApiKey = process.env.RESEND_API_KEY;
-	const from =
-		process.env.EMAIL_FROM ||
-		process.env.RESET_EMAIL_FROM ||
-		`${siteConfig.name} <no-reply@yourdomain.com>`;
+	const from = process.env.EMAIL_FROM || process.env.RESET_EMAIL_FROM;
 	const replyTo = process.env.EMAIL_REPLY_TO || process.env.RESET_EMAIL_REPLY_TO;
 	if (!resendApiKey) {
 		throw new Error(`RESEND_API_KEY not set. Unable to send "${subject}" email.`);
+	}
+	if (!from) {
+		throw new Error(`EMAIL_FROM or RESET_EMAIL_FROM not set. Unable to send "${subject}" email.`);
 	}
 	const res = await fetch('https://api.resend.com/emails', {
 		method: 'POST',
@@ -46,8 +44,7 @@ export async function sendEmail({ to, subject, html }: SendEmailArgs): Promise<v
 		})
 	});
 	if (!res.ok) {
-		const text = await res.text();
-		console.error(`Resend API error sending "${subject}" email:`, res.status, text);
+		console.error(`Resend API error sending "${subject}" email:`, res.status);
 		throw new Error(`Failed to send "${subject}" email (${res.status})`);
 	}
 }

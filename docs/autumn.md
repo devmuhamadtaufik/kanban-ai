@@ -9,9 +9,12 @@ Autumn is a billing and subscription management platform that integrates with St
 ### 1. Installation
 
 ```bash
-pnpm add autumn-js @useautumn/convex
+pnpm add autumn-js@^0.1.85 @useautumn/convex@^0.0.23
 pnpm add -D atmn
 ```
+
+`@useautumn/convex` currently requires `autumn-js@^0.1.24`; do not upgrade the runtime SDK
+to `1.x` until the Convex package supports it.
 
 ### 2. Initialize Autumn
 
@@ -33,7 +36,7 @@ pnpm dlx convex env set AUTUMN_SECRET_KEY=am_sk_xxx
 
 ### 4. Convex Configuration
 
-Update `convex/convex.config.ts` to include the Autumn component:
+Register the Autumn component alongside Better Auth:
 
 ```typescript
 import { defineApp } from 'convex/server';
@@ -49,20 +52,18 @@ export default app;
 
 ### 5. Autumn Client Setup
 
-Create `convex/autumn.ts` to initialize the Autumn client and define customer identification:
+Create `convex/autumn.ts` to initialize the component client and define customer identification:
 
 ```typescript
 import { components } from './_generated/api';
 import { Autumn } from '@useautumn/convex';
+import { type GenericCtx } from '@convex-dev/better-auth';
+import { type DataModel } from './_generated/dataModel';
 import { resolveActiveOrganization } from './organizations';
 
 export const autumn = new Autumn(components.autumn, {
 	secretKey: process.env.AUTUMN_SECRET_KEY ?? '',
-	// Billing is scoped to the active organization, not the user. Every user
-	// gets a personal organization on sign-up, so this works unchanged for
-	// B2C (personal org = the customer) and B2B (shared org = the customer).
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	identify: async (ctx: any) => {
+	identify: async (ctx: GenericCtx<DataModel>) => {
 		try {
 			const resolved = await resolveActiveOrganization(ctx);
 			if (!resolved) return null;
@@ -71,32 +72,26 @@ export const autumn = new Autumn(components.autumn, {
 				customerId: resolved.organization.id,
 				customerData: {
 					name: resolved.organization.name,
-					// Billing contact: the member currently acting on behalf of the org
 					email: resolved.session.user.email
 				}
 			};
 		} catch {
-			// User is not authenticated, return null
 			return null;
 		}
 	}
 });
 
-// Only member-safe operations are exposed as public Convex functions.
-// Subscription-mutating operations (checkout, attach, cancel, billing portal,
-// …) go through `billing.ts`, which checks the caller's organization role via
-// the Autumn instance methods (e.g. `autumn.checkout(ctx, args)`).
 export const { track, check, usage, query, listProducts } = autumn.api();
 ```
 
 **Key Points:**
 
-- The `identify` function maps the **active organization** (from the Better Auth organization plugin) to the Autumn customer
+- The `identify` function maps the **active organization** to the Autumn customer
 - Use the Better Auth organization `id` as the `customerId`; the subscription follows the organization, so all members share it and switching organizations switches the billing context
 - Every user has a personal organization (auto-created on sign-up), and every organization provisions an Autumn customer in the Better Auth `afterCreateOrganization` hook
-- Configure the free product as default (`is_default: true` in the current `atmn` config shape; `autoEnable: true` in newer Autumn docs) so new customers start on the free tier automatically
+- Configure the free plan with `autoEnable: true` so new customers start on the free tier automatically
 - Catch authentication errors gracefully - unauthenticated users can still view products
-- Only export member-safe API methods publicly; subscription-mutating operations are wrapped in `billing.ts` actions that require the `owner` or `admin` organization role
+- Only expose member-safe API methods publicly; subscription-mutating operations are wrapped in `billing.ts` actions that require the `owner` or `admin` organization role
 
 ## Product Configuration
 
@@ -105,41 +100,46 @@ export const { track, check, usage, query, listProducts } = autumn.api();
 Create `autumn.config.ts` in the project root:
 
 ```typescript
-import { feature, product, featureItem, priceItem } from 'atmn';
+import { feature, item, plan } from 'atmn';
 
 // Define Features
 export const messages = feature({
 	id: 'messages',
 	name: 'Messages',
-	type: 'single_use'
+	type: 'metered',
+	consumable: true
 });
 
-// Define Products
-export const free = product({
+// Define Plans
+export const freePlan = plan({
 	id: 'free_plan',
 	name: 'Free Plan',
-	is_default: true,
+	autoEnable: true,
 	items: [
-		featureItem({
-			feature_id: messages.id,
-			included_usage: 5,
-			interval: 'month'
+		item({
+			featureId: messages.id,
+			included: 5,
+			reset: {
+				interval: 'month'
+			}
 		})
 	]
 });
 
-export const pro = product({
+export const pro = plan({
 	id: 'pro',
 	name: 'Pro',
+	price: {
+		amount: 20,
+		interval: 'month'
+	},
 	items: [
-		featureItem({
-			feature_id: messages.id,
-			included_usage: 100,
-			interval: 'month'
-		}),
-		priceItem({
-			price: 20,
-			interval: 'month'
+		item({
+			featureId: messages.id,
+			included: 100,
+			reset: {
+				interval: 'month'
+			}
 		})
 	]
 });
@@ -151,7 +151,7 @@ export const pro = product({
 pnpm dlx atmn push
 ```
 
-This syncs your products to Autumn's sandbox environment.
+This syncs your plans to Autumn's sandbox environment.
 
 ## Creating Billing Functions
 
@@ -160,34 +160,47 @@ Create `convex/billing.ts` to wrap Autumn functions:
 ```typescript
 import { action } from './_generated/server';
 import { v } from 'convex/values';
-import { api } from './_generated/api';
+import { autumn } from './autumn';
+import { resolveActiveOrganization } from './organizations';
 
-// Re-export listProducts as-is (doesn't require auth)
+// Re-export listProducts as-is.
 export { listProducts } from './autumn';
 
-// Wrapper for checkout that creates customer first
+async function ensureCustomer(ctx, resolved) {
+	const customer = {
+		id: resolved.organization.id,
+		name: resolved.organization.name,
+		email: resolved.session.user.email
+	};
+	const created = await autumn.customers.create(ctx, customer);
+	if (!created.error) return;
+
+	const updated = await autumn.customers.update(ctx, {
+		name: customer.name,
+		email: customer.email
+	});
+	if (updated.error) throw updated.error;
+}
+
+// Wrapper for checkout that ensures the customer exists first.
 export const checkout = action({
 	args: { productId: v.string() },
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	handler: async (ctx, args): Promise<any> => {
-		// First ensure customer exists by calling createCustomer
-		await ctx.runAction(api.autumn.createCustomer, {});
-
-		// Now proceed with checkout
-		return await ctx.runAction(api.autumn.checkout, { productId: args.productId });
+	handler: async (ctx, args) => {
+		const resolved = await resolveActiveOrganization(ctx);
+		if (!resolved) throw new Error('No active organization');
+		await ensureCustomer(ctx, resolved);
+		return await autumn.checkout(ctx, { productId: args.productId });
 	}
 });
 
-// Wrapper for billing portal that creates customer first
+// Wrapper for billing portal that ensures the customer exists first.
 export const billingPortal = action({
 	args: {},
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	handler: async (ctx): Promise<any> => {
-		// First ensure customer exists by calling createCustomer
-		await ctx.runAction(api.autumn.createCustomer, {});
-
-		// Now proceed with billing portal
-		return await ctx.runAction(api.autumn.billingPortal, {});
+	handler: async (ctx) => {
+		const resolved = await resolveActiveOrganization(ctx);
+		if (!resolved) throw new Error('No active organization');
+		await ensureCustomer(ctx, resolved);
+		return await autumn.customers.billingPortal(ctx, {});
 	}
 });
 ```
@@ -195,8 +208,9 @@ export const billingPortal = action({
 **Important:**
 
 - Organizations create their Autumn customer in Better Auth's `afterCreateOrganization` hook, so billing page reads do not need a repair/create call
-- Keep `createCustomer`/`customers.create` before checkout, billing portal, and future feature `check`/`track` wrappers as a defensive idempotent guard
-- Mark the free product as default so Autumn grants the free tier when the customer is created
+- Keep an idempotent customer guard before checkout, billing portal, and future feature `check`/`track` wrappers
+- The current Convex wrapper exposes `customers.create` and `customers.update`; use the create-then-update fallback as the idempotent guard
+- Mark the free plan with `autoEnable: true` so Autumn grants the free tier when the customer is created
 
 ## Frontend Integration
 
@@ -267,13 +281,17 @@ interface Product {
 	id: string;
 	name: string;
 	items?: Array<{
+		type?: 'feature' | 'priced_feature' | 'price';
 		price?: number;
-		interval?: string; // 'month' | 'year'
+		interval?: string;
 		feature_id?: string;
-		included_usage?: number;
+		included_usage?: number | 'inf';
 	}>;
 }
 ```
+
+This is the runtime response shape from the compatible `autumn-js@0.1.x` SDK. The
+camelCase `plan`/`item` shape in `autumn.config.ts` is only the `atmn` configuration API.
 
 ### Response Format
 
@@ -296,7 +314,7 @@ Autumn API responses follow this structure:
 let plans = $derived<Plan[]>(
 	Array.isArray(products)
 		? products.map((product) => {
-				const priceItem = product.items?.find((item) => item.price);
+				const priceItem = product.items?.find((item) => item.type === 'price');
 				const featureItem = product.items?.find((item) => item.feature_id === 'messages');
 
 				return {
@@ -314,13 +332,13 @@ let plans = $derived<Plan[]>(
 ### Feature Access Control
 
 ```typescript
-import { check, track } from './autumn';
+import { api } from './_generated/api';
 
 // Check if user has access to a feature
 export const canAccessFeature = action({
 	args: { featureId: v.string() },
 	handler: async (ctx, { featureId }) => {
-		const result = await ctx.runAction(check, { featureId });
+		const result = await ctx.runAction(api.autumn.check, { featureId });
 		return result?.data?.allowed || false;
 	}
 });
@@ -329,16 +347,16 @@ export const canAccessFeature = action({
 export const trackUsage = action({
 	args: { featureId: v.string() },
 	handler: async (ctx, { featureId }) => {
-		await ctx.runAction(track, { featureId });
+		await ctx.runAction(api.autumn.track, { featureId });
 	}
 });
 ```
 
 ## Best Practices
 
-1. **Customer Creation**: Provision the Autumn customer when the Better Auth organization is created; keep idempotent guards before checkout, billing portal, feature checks, and usage tracking
+1. **Customer Creation**: Provision the Autumn customer when the Better Auth organization is created; keep create-then-update guards before checkout, billing portal, feature checks, and usage tracking
 2. **Error Handling**: Wrap Autumn calls in try-catch blocks and handle errors gracefully
-3. **Authentication**: Use the `identify` function to automatically map authenticated users to customers
+3. **Authentication**: Use the component `identify` hook to map the active Better Auth organization to `customerId`
 4. **Product IDs**: Use consistent product IDs between `autumn.config.ts` and your frontend
 5. **Testing**: Use Autumn's sandbox environment for development and testing
 6. **Type Safety**: Define TypeScript interfaces for products and responses

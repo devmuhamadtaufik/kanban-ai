@@ -11,7 +11,7 @@ if (!process.env.SITE_URL && process.env.BETTER_AUTH_URL) {
 	process.env.SITE_URL = process.env.BETTER_AUTH_URL;
 }
 
-// Re-export listProducts as-is
+// Re-export listProducts as-is.
 export { listProducts } from './autumn';
 
 /**
@@ -66,14 +66,24 @@ async function ensureCustomer(
 	ctx: GenericCtx<DataModel>,
 	resolved: NonNullable<Awaited<ReturnType<typeof resolveActiveOrganization>>>
 ) {
-	const created = await autumn.customers.create(ctx, {
+	const customer = {
 		id: resolved.organization.id,
 		name: resolved.organization.name,
 		email: resolved.session.user.email
+	};
+	const created = await autumn.customers.create(ctx, customer);
+	if (!created.error) return;
+
+	const updated = await autumn.customers.update(ctx, {
+		name: customer.name,
+		email: customer.email
 	});
-	if (created.error) {
-		console.error('Failed to create Autumn customer:', created.error);
-		throw new ConvexError(`Failed to prepare billing: ${created.error.message}`);
+	if (!updated.error) return;
+
+	const error = updated.error ?? created.error;
+	if (error) {
+		console.error('Failed to create Autumn customer:', error);
+		throw new ConvexError(`Failed to prepare billing: ${error.message}`);
 	}
 }
 

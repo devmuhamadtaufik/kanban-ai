@@ -1,5 +1,7 @@
 import { components } from './_generated/api';
 import { Autumn } from '@useautumn/convex';
+import { type GenericCtx } from '@convex-dev/better-auth';
+import { type DataModel } from './_generated/dataModel';
 import { resolveActiveOrganization } from './organizations';
 
 export const autumn = new Autumn(components.autumn, {
@@ -7,8 +9,7 @@ export const autumn = new Autumn(components.autumn, {
 	// Billing is scoped to the active organization, not the user. Every user
 	// gets a personal organization on sign-up, so this works unchanged for
 	// B2C (personal org = the customer) and B2B (shared org = the customer).
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	identify: async (ctx: any) => {
+	identify: async (ctx: GenericCtx<DataModel>) => {
 		try {
 			const resolved = await resolveActiveOrganization(ctx);
 			if (!resolved) return null;
@@ -30,6 +31,5 @@ export const autumn = new Autumn(components.autumn, {
 
 // Only member-safe operations are exposed as public Convex functions.
 // Subscription-mutating operations (checkout, attach, cancel, billing portal,
-// …) go through `billing.ts`, which checks the caller's organization role via
-// the Autumn instance methods (e.g. `autumn.checkout(ctx, args)`).
+// ...) go through `billing.ts`, which checks the caller's organization role.
 export const { track, check, usage, query, listProducts } = autumn.api();

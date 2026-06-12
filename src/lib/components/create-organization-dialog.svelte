@@ -62,10 +62,9 @@
 				slug
 			});
 			if (error) throw new Error(error.message);
-			if (data) {
-				await authClient.organization.setActive({ organizationId: data.id });
-				await invalidateAll();
-			}
+			if (!data) throw new Error('Organization creation returned no data');
+			await authClient.organization.setActive({ organizationId: data.id });
+			await invalidateAll();
 			toast.success('Organization created');
 			open = false;
 			reset();

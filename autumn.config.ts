@@ -1,38 +1,43 @@
-import { feature, product, featureItem, priceItem } from 'atmn';
+import { feature, item, plan } from 'atmn';
 
 // Features
 export const messages = feature({
 	id: 'messages',
-	name: 'messages',
-	type: 'single_use'
+	name: 'Messages',
+	type: 'metered',
+	consumable: true
 });
 
-// Products
-export const pro = product({
+// Plans
+export const pro = plan({
 	id: 'pro',
 	name: 'Pro',
+	price: {
+		amount: 20,
+		interval: 'month'
+	},
 	items: [
-		featureItem({
-			feature_id: messages.id,
-			included_usage: 100,
-			interval: 'month'
-		}),
-		priceItem({
-			price: 20,
-			interval: 'month'
+		item({
+			featureId: messages.id,
+			included: 100,
+			reset: {
+				interval: 'month'
+			}
 		})
 	]
 });
 
-export const freePlan = product({
+export const freePlan = plan({
 	id: 'free_plan',
 	name: 'Free Plan',
-	is_default: true,
+	autoEnable: true,
 	items: [
-		featureItem({
-			feature_id: messages.id,
-			included_usage: 5,
-			interval: 'month'
+		item({
+			featureId: messages.id,
+			included: 5,
+			reset: {
+				interval: 'month'
+			}
 		})
 	]
 });

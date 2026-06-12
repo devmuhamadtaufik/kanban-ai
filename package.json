@@ -32,7 +32,7 @@
 		"@types/d3-scale": "^4.0.9",
 		"@types/d3-shape": "^3.1.7",
 		"@types/node": "^22",
-		"atmn": "^0.0.24",
+		"atmn": "^1.1.8",
 		"bits-ui": "^2.11.4",
 		"clsx": "^2.1.1",
 		"d3-scale": "^4.0.2",
@@ -67,10 +67,10 @@
 		"@convex-dev/better-auth": "^0.12.2",
 		"@mmailaender/convex-better-auth-svelte": "^0.7.4",
 		"@mmailaender/convex-svelte": "^0.19.0",
-		"@useautumn/convex": "^0.0.12",
-		"autumn-js": "^0.1.39",
+		"@useautumn/convex": "0.0.23",
+		"autumn-js": "^0.1.85",
 		"better-auth": "~1.6.15",
-		"convex": "^1.40.0"
+		"convex": "^1.41.0"
 	},
 	"lint-staged": {
 		"*.{js,ts,svelte}": [
