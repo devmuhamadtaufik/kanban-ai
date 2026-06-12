@@ -5,13 +5,14 @@
 Added multi-tenancy via the Better Auth organization plugin, with billing scoped
 to the active organization instead of the user.
 
-- **Organizations**: every user gets a personal workspace on sign-up (so B2C
+- **Organizations**: every user gets a default organization on sign-up (so B2C
   works unchanged), plus org switcher, settings page (rename, members, roles),
-  email invitations, and an accept-invitation flow.
+  email invitations, and an accept-invitation flow. Ownership is immutable —
+  each org keeps its creator as sole owner — and you can't delete the only
+  organization you own (both enforced server-side).
 - **Org-scoped billing**: Autumn is keyed on the active organization; subscription
   changes are restricted to owners/admins, with members getting a read-only view.
-  Deleting an organization cancels its subscription; personal workspaces can't be
-  deleted (enforced server-side).
+  Deleting an organization cancels its subscription.
 - **Admin**: new `/admin/organizations` page (list, search, detail with members +
   billing) and user impersonation from `/admin/users`.
 

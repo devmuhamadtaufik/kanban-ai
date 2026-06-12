@@ -3,7 +3,7 @@ import { v } from 'convex/values';
 import { type DataModel } from './_generated/dataModel';
 import { type GenericCtx } from '@convex-dev/better-auth';
 import { authComponent, createAuth } from './auth';
-import { findMany, findOne } from './authAdapter';
+import { countOwnedOrganizations, findMany, findOne } from './authAdapter';
 
 /**
  * Organization helpers built on the Better Auth organization plugin.
@@ -194,7 +194,8 @@ export const getActiveOrganization = query({
 				})
 			),
 			currentUserId: v.string(),
-			currentMemberRole: v.union(v.null(), v.string())
+			currentMemberRole: v.union(v.null(), v.string()),
+			isOnlyOwnedOrganization: v.boolean()
 		})
 	),
 	handler: async (ctx) => {
@@ -202,10 +203,17 @@ export const getActiveOrganization = query({
 			const resolved = await resolveActiveOrganization(ctx);
 			if (!resolved) return null;
 			const { session, organization, currentMemberRole } = resolved;
+			// Owners can't delete the only organization they own (enforced
+			// server-side in auth.ts); the UI uses this to explain why.
+			let isOnlyOwnedOrganization = false;
+			if (currentMemberRole === 'owner') {
+				isOnlyOwnedOrganization = (await countOwnedOrganizations(ctx, session.user.id)) <= 1;
+			}
 			return {
 				...organization,
 				currentUserId: session.user.id,
-				currentMemberRole
+				currentMemberRole,
+				isOnlyOwnedOrganization
 			};
 		} catch (e) {
 			// Null for unauthenticated callers, but log unexpected failures —

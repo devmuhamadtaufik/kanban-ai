@@ -3,7 +3,11 @@
  * To regenerate the schema, from your project root:
  *
  *   cd src/convex/betterAuth
- *   npx auth generate --output schema.ts
+ *   npx @better-auth/cli generate --output schema.ts -y
+ *
+ * (Use `npx @better-auth/cli`, NOT `npx auth` — the `auth` binary resolves to
+ * an unrelated package here; see docs/better_auth.md. The CLI regenerates this
+ * header with the wrong command, so re-apply this note after regenerating.)
  *
  * To customize the schema, generate to an alternate file and import
  * the table definitions to your schema file. See

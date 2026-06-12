@@ -1,44 +1,35 @@
 /**
  * Client-side helpers for Better Auth organizations.
+ *
+ * Ownership is immutable in this template: every organization has exactly
+ * one owner — its creator (enforced by organizationHooks in
+ * `src/convex/auth.ts`). Members can therefore only hold or be assigned the
+ * roles below.
  */
-
-interface OrganizationLike {
-	// Better Auth stores metadata as a JSON string but returns it parsed in
-	// some APIs; accept anything and normalize defensively.
-	metadata?: unknown;
-}
-
-export function parseOrganizationMetadata(organization: OrganizationLike): Record<string, unknown> {
-	const { metadata } = organization;
-	if (!metadata) return {};
-	if (typeof metadata === 'string') {
-		try {
-			return JSON.parse(metadata) as Record<string, unknown>;
-		} catch {
-			return {};
-		}
-	}
-	if (typeof metadata === 'object') {
-		return metadata as Record<string, unknown>;
-	}
-	return {};
-}
-
-/**
- * Personal organizations are created automatically on sign-up (see
- * `src/convex/auth.ts`). They serve as the default billing/workspace scope
- * for B2C use, so they can't be deleted or left.
- */
-export function isPersonalOrganization(organization: OrganizationLike): boolean {
-	return parseOrganizationMetadata(organization).personal === true;
-}
 
 export const organizationRoles = ['owner', 'admin', 'member'] as const;
 export type OrganizationRole = (typeof organizationRoles)[number];
 
+/** Roles that can be granted to members; `owner` is reserved for the creator. */
+export const assignableOrganizationRoles = ['admin', 'member'] as const;
+
+/**
+ * Better Auth member APIs accept `string | string[]` roles and store arrays
+ * as comma-separated strings (e.g. `"owner,member"`). Always normalize before
+ * inspecting roles so multi-role values can't slip past equality checks.
+ */
+export function normalizeOrganizationRoles(role: unknown): string[] {
+	const raw = Array.isArray(role) ? role.join(',') : String(role ?? '');
+	return raw
+		.split(',')
+		.map((entry) => entry.trim())
+		.filter(Boolean);
+}
+
 /** Owners and admins can manage members, invitations, and organization settings. */
 export function canManageOrganization(role: string | null | undefined): boolean {
-	return role === 'owner' || role === 'admin';
+	const roles = normalizeOrganizationRoles(role);
+	return roles.includes('owner') || roles.includes('admin');
 }
 
 export function slugifyOrganizationName(name: string): string {

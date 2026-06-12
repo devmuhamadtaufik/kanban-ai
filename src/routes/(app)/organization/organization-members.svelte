@@ -10,7 +10,7 @@
 	import { toast } from 'svelte-sonner';
 	import { showErrorToast } from '$lib/toast.js';
 	import { authClient } from '$lib/auth-client.js';
-	import { organizationRoles, type OrganizationRole } from '$lib/organizations.js';
+	import { assignableOrganizationRoles, type OrganizationRole } from '$lib/organizations.js';
 	import type { ActiveOrganization, OrganizationMember } from './types';
 
 	interface Props {
@@ -23,19 +23,13 @@
 	let memberToRemove = $state<OrganizationMember | null>(null);
 	let isRemoving = $state(false);
 
-	// Only owners can promote to / demote from the owner role
-	let assignableRoles = $derived(
-		organization.currentMemberRole === 'owner'
-			? organizationRoles
-			: organizationRoles.filter((role) => role !== 'owner')
-	);
-
 	function canEditMember(member: OrganizationMember): boolean {
 		if (!canManage) return false;
-		// Changing your own role (e.g. demoting the last owner) is done by
-		// another owner; removing yourself is "Leave" in the danger zone.
+		// Ownership is immutable: the owner can't be demoted or removed
+		// (enforced server-side too). Removing yourself is "Leave" in the
+		// danger zone.
+		if (member.role === 'owner') return false;
 		if (member.userId === organization.currentUserId) return false;
-		if (member.role === 'owner' && organization.currentMemberRole !== 'owner') return false;
 		return true;
 	}
 
@@ -126,7 +120,7 @@
 										{member.role}
 									</Select.Trigger>
 									<Select.Content>
-										{#each assignableRoles as role (role)}
+										{#each assignableOrganizationRoles as role (role)}
 											<Select.Item value={role} label={role} class="capitalize">
 												{role}
 											</Select.Item>

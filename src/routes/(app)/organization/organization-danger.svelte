@@ -7,7 +7,6 @@
 	import { toast } from 'svelte-sonner';
 	import { showErrorToast } from '$lib/toast.js';
 	import { authClient } from '$lib/auth-client.js';
-	import { isPersonalOrganization } from '$lib/organizations.js';
 	import type { ActiveOrganization } from './types';
 
 	interface Props {
@@ -19,11 +18,10 @@
 	let confirmAction = $state<'leave' | 'delete' | null>(null);
 	let isProcessing = $state(false);
 
-	let isPersonal = $derived(isPersonalOrganization(organization));
 	let isOwner = $derived(organization.currentMemberRole === 'owner');
 
-	// Fall back to another organization (e.g. the personal workspace) after
-	// leaving or deleting the active one, so there's always an active org.
+	// Fall back to another organization after leaving or deleting the active
+	// one, so there's always an active org.
 	async function activateFallbackOrganization() {
 		const { data: organizations } = await authClient.organization.list();
 		const fallback = organizations?.find((candidate) => candidate.id !== organization.id);
@@ -61,37 +59,43 @@
 	}
 </script>
 
-{#if !isPersonal && (isOwner || organization.currentMemberRole)}
-	<Card.Root class="border-destructive/50">
-		<Card.Header>
-			<Card.Title>Danger Zone</Card.Title>
-			<Card.Description>Irreversible actions for this organization.</Card.Description>
-		</Card.Header>
-		<Card.Content class="space-y-4">
-			{#if !isOwner}
-				<div class="flex items-center justify-between gap-4">
-					<div>
-						<p class="text-sm font-medium">Leave organization</p>
-						<p class="text-sm text-muted-foreground">
-							You will lose access to this organization and its data.
-						</p>
-					</div>
-					<Button variant="destructive" onclick={() => (confirmAction = 'leave')}>Leave</Button>
+<Card.Root class="border-destructive/50">
+	<Card.Header>
+		<Card.Title>Danger Zone</Card.Title>
+		<Card.Description>Irreversible actions for this organization.</Card.Description>
+	</Card.Header>
+	<Card.Content class="space-y-4">
+		{#if !isOwner}
+			<div class="flex items-center justify-between gap-4">
+				<div>
+					<p class="text-sm font-medium">Leave organization</p>
+					<p class="text-sm text-muted-foreground">
+						You will lose access to this organization and its data.
+					</p>
 				</div>
-			{:else}
-				<div class="flex items-center justify-between gap-4">
-					<div>
-						<p class="text-sm font-medium">Delete organization</p>
-						<p class="text-sm text-muted-foreground">
-							Permanently delete this organization, its members, and its subscription.
-						</p>
-					</div>
-					<Button variant="destructive" onclick={() => (confirmAction = 'delete')}>Delete</Button>
+				<Button variant="destructive" onclick={() => (confirmAction = 'leave')}>Leave</Button>
+			</div>
+		{:else}
+			<div class="flex items-center justify-between gap-4">
+				<div>
+					<p class="text-sm font-medium">Delete organization</p>
+					<p class="text-sm text-muted-foreground">
+						{organization.isOnlyOwnedOrganization
+							? "You can't delete the only organization you own. Create another organization first."
+							: 'Permanently delete this organization, its members, and its subscription.'}
+					</p>
 				</div>
-			{/if}
-		</Card.Content>
-	</Card.Root>
-{/if}
+				<Button
+					variant="destructive"
+					disabled={organization.isOnlyOwnedOrganization}
+					onclick={() => (confirmAction = 'delete')}
+				>
+					Delete
+				</Button>
+			</div>
+		{/if}
+	</Card.Content>
+</Card.Root>
 
 <AlertDialog.Root
 	open={confirmAction !== null}

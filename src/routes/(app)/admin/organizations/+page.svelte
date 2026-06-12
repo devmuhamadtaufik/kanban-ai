@@ -13,7 +13,6 @@
 	import ChevronLeftIcon from '@lucide/svelte/icons/chevron-left';
 	import ChevronRightIcon from '@lucide/svelte/icons/chevron-right';
 	import { Debounced } from 'runed';
-	import { isPersonalOrganization } from '$lib/organizations.js';
 	import { showErrorToast } from '$lib/toast.js';
 
 	const PAGE_SIZE = 20;
@@ -51,16 +50,13 @@
 		previousCursors = previousCursors.slice(0, -1);
 	}
 
-	// Detail sheet
+	// Detail sheet — 'skip' keeps a single stable query that only subscribes
+	// while an organization is selected
 	let selectedOrganizationId = $state<string | null>(null);
-	let detailResponse = $derived(
-		selectedOrganizationId
-			? useQuery(api.admin.getOrganization, () => ({
-					organizationId: selectedOrganizationId!
-				}))
-			: null
+	const detailResponse = useQuery(api.admin.getOrganization, () =>
+		selectedOrganizationId ? { organizationId: selectedOrganizationId } : 'skip'
 	);
-	let detail = $derived(detailResponse?.data ?? null);
+	let detail = $derived(detailResponse.data ?? null);
 
 	interface BillingSummary {
 		customerExists: boolean;
@@ -137,7 +133,6 @@
 				<Table.Header>
 					<Table.Row>
 						<Table.Head>Organization</Table.Head>
-						<Table.Head>Type</Table.Head>
 						<Table.Head>Members</Table.Head>
 						<Table.Head>Owner</Table.Head>
 						<Table.Head>Created</Table.Head>
@@ -162,11 +157,6 @@
 									</div>
 								</div>
 							</Table.Cell>
-							<Table.Cell>
-								<Badge variant={isPersonalOrganization(organization) ? 'secondary' : 'outline'}>
-									{isPersonalOrganization(organization) ? 'Personal' : 'Team'}
-								</Badge>
-							</Table.Cell>
 							<Table.Cell>{organization.memberCount}</Table.Cell>
 							<Table.Cell>
 								{#if organization.owner}
@@ -184,7 +174,7 @@
 						</Table.Row>
 					{:else}
 						<Table.Row>
-							<Table.Cell colspan={5} class="text-center text-muted-foreground">
+							<Table.Cell colspan={4} class="text-center text-muted-foreground">
 								No organizations found.
 							</Table.Cell>
 						</Table.Row>
@@ -218,7 +208,7 @@
 	}}
 >
 	<Sheet.Content class="overflow-y-auto sm:max-w-lg">
-		{#if detailResponse?.isLoading}
+		{#if detailResponse.isLoading}
 			<div class="space-y-3 p-4">
 				<Skeleton class="h-8 w-2/3" />
 				<Skeleton class="h-24 w-full" />
@@ -226,12 +216,7 @@
 			</div>
 		{:else if detail}
 			<Sheet.Header>
-				<Sheet.Title class="flex items-center gap-2">
-					{detail.name}
-					<Badge variant={isPersonalOrganization(detail) ? 'secondary' : 'outline'}>
-						{isPersonalOrganization(detail) ? 'Personal' : 'Team'}
-					</Badge>
-				</Sheet.Title>
+				<Sheet.Title>{detail.name}</Sheet.Title>
 				<Sheet.Description>
 					{detail.slug} · created {dateFormatter.format(detail.createdAt)}
 				</Sheet.Description>

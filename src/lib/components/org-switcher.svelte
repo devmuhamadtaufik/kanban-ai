@@ -9,7 +9,6 @@
 	import { invalidateAll } from '$app/navigation';
 	import { showErrorToast } from '$lib/toast.js';
 	import { authClient } from '$lib/auth-client.js';
-	import { isPersonalOrganization } from '$lib/organizations.js';
 	import CreateOrganizationDialog from './create-organization-dialog.svelte';
 
 	const sidebar = useSidebar();
@@ -64,9 +63,7 @@
 							</span>
 							<span class="truncate text-xs text-muted-foreground">
 								{#if $activeOrganization.data}
-									{isPersonalOrganization($activeOrganization.data)
-										? 'Personal workspace'
-										: `${$activeOrganization.data.members?.length ?? 1} member${($activeOrganization.data.members?.length ?? 1) === 1 ? '' : 's'}`}
+									{`${$activeOrganization.data.members?.length ?? 1} member${($activeOrganization.data.members?.length ?? 1) === 1 ? '' : 's'}`}
 								{/if}
 							</span>
 						</div>

@@ -22,10 +22,12 @@
 	let isSubmitting = $state(false);
 	let slugTaken = $state(false);
 
-	// Follow the name until the user edits the slug manually
-	$effect(() => {
+	// The slug follows the name until the user edits it manually — handled in
+	// the input event path rather than an $effect (see docs/svelte/*.md on
+	// avoiding state-synchronization effects)
+	function handleNameInput() {
 		if (!slugEdited) slug = slugifyOrganizationName(name);
-	});
+	}
 
 	const debouncedSlug = new Debounced(() => slug, 300);
 
@@ -89,6 +91,7 @@
 				<Input
 					id="organization-name"
 					bind:value={name}
+					oninput={handleNameInput}
 					placeholder="Acme Inc."
 					required
 					disabled={isSubmitting}

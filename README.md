@@ -29,7 +29,8 @@ A production-ready SaaS starter template built for the [Modern Stack Hackathon](
 
 - ✅ **Organizations & Multi-tenancy**
   - Better Auth organization plugin with roles (owner/admin/member)
-  - Personal organization auto-created per user (B2C works out of the box)
+  - Default organization auto-created per user (B2C works out of the box)
+  - Immutable ownership: each organization keeps its creator as sole owner
   - Organization switcher, settings page, member management
   - Email invitations with accept/decline flow
   - Billing scoped to the active organization

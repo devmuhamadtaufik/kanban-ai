@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import * as Card from '$lib/components/ui/card/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
@@ -7,7 +6,6 @@
 	import { toast } from 'svelte-sonner';
 	import { showErrorToast } from '$lib/toast.js';
 	import { authClient } from '$lib/auth-client.js';
-	import { isPersonalOrganization } from '$lib/organizations.js';
 	import type { ActiveOrganization } from './types';
 
 	interface Props {
@@ -42,12 +40,7 @@
 
 <Card.Root>
 	<Card.Header>
-		<Card.Title class="flex items-center gap-2">
-			General
-			{#if isPersonalOrganization(organization)}
-				<Badge variant="secondary">Personal workspace</Badge>
-			{/if}
-		</Card.Title>
+		<Card.Title>General</Card.Title>
 		<Card.Description>Your organization's name and identifier.</Card.Description>
 	</Card.Header>
 	<Card.Content>

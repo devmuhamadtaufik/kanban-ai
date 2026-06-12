@@ -10,8 +10,13 @@ import { Autumn } from 'autumn-js';
 import authSchema from './betterAuth/schema';
 import authConfig from './auth.config';
 import { actionEmailHtml, escapeHtml, sendEmail } from './email';
+import { countOwnedOrganizations, findOne, updateMany } from './authAdapter';
 import { siteConfig } from '../lib/config';
-import { isPersonalOrganization, slugifyOrganizationName } from '../lib/organizations';
+import {
+	assignableOrganizationRoles,
+	normalizeOrganizationRoles,
+	slugifyOrganizationName
+} from '../lib/organizations';
 
 const siteUrl = process.env.SITE_URL!;
 
@@ -24,12 +29,14 @@ export const authComponent = createClient<DataModel, typeof authSchema>(componen
 });
 
 /**
- * Every user gets a personal organization on sign-up. This keeps the data
+ * Every user gets a default organization on sign-up. This keeps the data
  * model uniform: billing and app data always hang off an organization, so
- * the same template works for B2C (users stay in their personal org) and
- * B2B (users create or join shared organizations).
+ * the same template works for B2C (users stay in their own org) and B2B
+ * (users create or join shared organizations). It's a regular organization —
+ * the user can rename it, invite people into it, or delete it once they own
+ * another one (see the deletion guard in `organizationHooks` below).
  */
-const createPersonalOrganization = async (
+const createDefaultOrganization = async (
 	ctx: GenericCtx<DataModel>,
 	user: { id: string; name?: string | null; email: string }
 ) => {
@@ -37,13 +44,28 @@ const createPersonalOrganization = async (
 	const slugBase = slugifyOrganizationName(user.name || user.email.split('@')[0]) || 'workspace';
 	return await auth.api.createOrganization({
 		body: {
-			name: user.name ? `${user.name}'s Workspace` : 'Personal Workspace',
+			name: user.name ? `${user.name}'s Workspace` : 'My Workspace',
 			slug: `${slugBase}-${crypto.randomUUID().slice(0, 8)}`,
-			metadata: { personal: true },
 			// Server-side call: create the organization on behalf of the new user.
 			userId: user.id
 		}
 	});
+};
+
+/**
+ * Members and invitations may only carry a single canonical role —
+ * `owner` is reserved for the creator, and multi-role values (which Better
+ * Auth would store as comma-separated strings) are rejected so stored roles
+ * stay canonical and safe to compare by equality.
+ */
+const requireAssignableRole = (roles: string[]) => {
+	const isValid =
+		roles.length === 1 && (assignableOrganizationRoles as readonly string[]).includes(roles[0]);
+	if (!isValid) {
+		throw new APIError('BAD_REQUEST', {
+			message: `Role must be one of: ${assignableOrganizationRoles.join(', ')}`
+		});
+	}
 };
 
 // Plain options factory — used both by `betterAuth()` at runtime and by
@@ -119,7 +141,7 @@ export const createOptions = (ctx: GenericCtx<DataModel>) =>
 				create: {
 					after: async (user, hookCtx) => {
 						try {
-							const organization = await createPersonalOrganization(ctx, user);
+							const organization = await createDefaultOrganization(ctx, user);
 							// `create.after` hooks run after the sign-up transaction, so the
 							// first session already exists by now — backfill its active
 							// organization (the `session.create.before` hook below covers
@@ -134,7 +156,7 @@ export const createOptions = (ctx: GenericCtx<DataModel>) =>
 						} catch (e) {
 							// Don't fail sign-up if organization creation fails; the user
 							// can still create an organization manually.
-							console.error('Failed to create personal organization:', e);
+							console.error('Failed to create default organization:', e);
 						}
 					}
 				}
@@ -171,14 +193,76 @@ export const createOptions = (ctx: GenericCtx<DataModel>) =>
 				// `requireEmailVerification` above, flip this to true as well so only
 				// verified addresses can view and accept invitations.
 				requireEmailVerificationOnInvitation: false,
+				// Ownership is immutable: every organization has exactly one owner,
+				// forever — its creator. Combined with the deletion guard below
+				// (you can't delete the only organization you own) and Better
+				// Auth's sole-owner-can't-leave rule, this guarantees every user
+				// always keeps an organization as their billing/data scope.
+				// Relax `beforeUpdateMemberRole` if a project needs ownership
+				// transfer.
+				//
+				// Better Auth accepts `string | string[]` roles and stores arrays
+				// as comma-separated strings, so all checks normalize roles and
+				// granted roles are restricted to a single canonical value —
+				// `"owner,member"`-style values would otherwise smuggle owner
+				// permissions past equality checks.
 				organizationHooks: {
-					beforeDeleteOrganization: async ({ organization }) => {
-						// The personal workspace is the fallback billing/data scope for
-						// every user, so it can never be deleted. The UI hides the
-						// option, but the public API must enforce it too.
-						if (isPersonalOrganization(organization)) {
+					beforeAddMember: async ({ member, organization }) => {
+						const roles = normalizeOrganizationRoles(member.role);
+						if (!roles.includes('owner')) {
+							requireAssignableRole(roles);
+							return;
+						}
+						// The only owner-role member is the creator, added while the
+						// organization is still empty at creation time.
+						const existingMember = await findOne(ctx, {
+							model: 'member',
+							where: [{ field: 'organizationId', value: organization.id }]
+						});
+						if (existingMember || roles.length > 1) {
 							throw new APIError('BAD_REQUEST', {
-								message: 'Personal workspaces cannot be deleted'
+								message: 'Organizations have a single owner'
+							});
+						}
+					},
+					beforeCreateInvitation: async ({ invitation }) => {
+						// Invitation acceptance bypasses beforeAddMember, so validate
+						// the role at the source.
+						requireAssignableRole(normalizeOrganizationRoles(invitation.role));
+					},
+					beforeUpdateMemberRole: async ({ member, newRole }) => {
+						if (normalizeOrganizationRoles(member.role).includes('owner')) {
+							throw new APIError('BAD_REQUEST', {
+								message: "The organization owner can't be changed"
+							});
+						}
+						requireAssignableRole(normalizeOrganizationRoles(newRole));
+					},
+					beforeRemoveMember: async ({ member }) => {
+						if (normalizeOrganizationRoles(member.role).includes('owner')) {
+							throw new APIError('BAD_REQUEST', {
+								message: "The organization owner can't be removed"
+							});
+						}
+					},
+					beforeDeleteOrganization: async ({ organization, user }) => {
+						// Deleting your only organization would leave you without a
+						// billing/data scope. Ownership can't be transferred, so the
+						// set of organizations a user owns only changes here.
+						if ((await countOwnedOrganizations(ctx, user.id)) <= 1) {
+							// Better Auth clears the session's activeOrganizationId
+							// before this hook runs — restore it so a rejected
+							// deletion doesn't leave the session without an active org.
+							await updateMany(ctx, {
+								model: 'session',
+								where: [
+									{ field: 'userId', value: user.id },
+									{ field: 'activeOrganizationId', value: null }
+								],
+								update: { activeOrganizationId: organization.id }
+							});
+							throw new APIError('BAD_REQUEST', {
+								message: "You can't delete the only organization you own"
 							});
 						}
 						// Clean up billing before the organization disappears. Failing
