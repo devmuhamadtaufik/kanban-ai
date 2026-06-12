@@ -20,6 +20,30 @@ import {
 
 const siteUrl = process.env.SITE_URL!;
 
+async function createAutumnCustomerForOrganization({
+	organization,
+	user
+}: {
+	organization: { id: string; name: string };
+	user: { email: string };
+}) {
+	const secretKey = process.env.AUTUMN_SECRET_KEY;
+	if (!secretKey) return;
+
+	const autumn = new Autumn({ secretKey });
+	const { error } = await autumn.customers.create({
+		id: organization.id,
+		name: organization.name,
+		email: user.email
+	});
+	if (error) {
+		// Don't throw from afterCreateOrganization: Better Auth has already
+		// persisted the org/member rows by then, so throwing would fail the
+		// request without rolling those writes back.
+		console.error('Failed to create Autumn customer:', error);
+	}
+}
+
 // The component client has methods needed for integrating Convex with Better Auth,
 // as well as helper methods for general use.
 export const authComponent = createClient<DataModel, typeof authSchema>(components.betterAuth, {
@@ -207,6 +231,9 @@ export const createOptions = (ctx: GenericCtx<DataModel>) =>
 				// `"owner,member"`-style values would otherwise smuggle owner
 				// permissions past equality checks.
 				organizationHooks: {
+					afterCreateOrganization: async ({ organization, user }) => {
+						await createAutumnCustomerForOrganization({ organization, user });
+					},
 					beforeAddMember: async ({ member, organization }) => {
 						const roles = normalizeOrganizationRoles(member.role);
 						if (!roles.includes('owner')) {

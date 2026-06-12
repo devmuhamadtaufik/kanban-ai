@@ -33,13 +33,14 @@ This project uses the Convex Better Auth **local install** ([docs](https://labs.
 
 Files under `src/convex/betterAuth/`:
 
-| File               | Role                                                                                                                                                   |
-| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `convex.config.ts` | Declares the dir as a Convex component (`defineComponent('betterAuth')`). The app's `src/convex/convex.config.ts` wires it with `app.use(betterAuth)`. |
-| `schema.ts`        | The Better Auth tables (`user`, `session`, `account`, `verification`, `jwks`) **including plugin-added fields**. Auto-generated — do not edit by hand. |
-| `adapter.ts`       | The component's CRUD surface (`create`, `findOne`, …) via `createApi(schema, createOptions)`.                                                          |
-| `auth.ts`          | A static `auth` instance used only by the CLI for schema introspection (no real Convex `ctx`).                                                         |
-| `_generated/`      | Convex codegen for the component (produced by `convex dev`).                                                                                           |
+| File                 | Role                                                                                                                                                                               |
+| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `convex.config.ts`   | Declares the dir as a Convex component (`defineComponent('betterAuth')`). The app's `src/convex/convex.config.ts` wires it with `app.use(betterAuth)`.                             |
+| `generatedSchema.ts` | The Better Auth tables (`user`, `session`, `account`, `verification`, `jwks`, organization plugin tables) **including plugin-added fields**. Auto-generated — do not edit by hand. |
+| `schema.ts`          | Project-owned schema composition. Imports `generatedSchema.ts` and adds custom indexes that Better Auth/Convex warnings require.                                                   |
+| `adapter.ts`         | The component's CRUD surface (`create`, `findOne`, …) via `createApi(schema, createOptions)`.                                                                                      |
+| `auth.ts`            | A static `auth` instance used only by the CLI for schema introspection (no real Convex `ctx`).                                                                                     |
+| `_generated/`        | Convex codegen for the component (produced by `convex dev`).                                                                                                                       |
 
 ### Regenerating the schema
 
@@ -48,9 +49,9 @@ Re-run the generator whenever you change the Better Auth plugins/config in `src/
 ```sh
 # from the project root
 cd src/convex/betterAuth
-npx @better-auth/cli generate --output schema.ts -y
+npx @better-auth/cli generate --output generatedSchema.ts -y
 cd -
-pnpm exec prettier --write src/convex/betterAuth/schema.ts
+pnpm exec prettier --write src/convex/betterAuth/generatedSchema.ts src/convex/betterAuth/schema.ts
 ```
 
 Notes:
@@ -58,7 +59,8 @@ Notes:
 - Use `npx @better-auth/cli generate` — **not** `npx auth generate`. The `auth` binary is not installed in this project, so `npx auth` would resolve to an unrelated package. (Some generated headers suggest `npx auth`; ignore that here.)
 - The CLI introspects the **installed** Better Auth instance (via `betterAuth/auth.ts`), so it emits fields matching your current `better-auth` version and plugins even if the CLI's own version differs.
 - The generator does not match our Prettier style, hence the `prettier --write` step.
-- `pnpm convex dev` then picks up the new `schema.ts`, regenerates `_generated/`, and pushes the migration. Commit the resulting `schema.ts` and `_generated/` changes together.
+- Keep custom indexes in `schema.ts`, not `generatedSchema.ts`, so they survive future schema generation.
+- `pnpm convex dev` then picks up the composed `schema.ts`, regenerates `_generated/`, and pushes the migration. Commit the resulting `generatedSchema.ts`, `schema.ts`, and `_generated/` changes together.
 
 ## Organizations
 

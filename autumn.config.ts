@@ -27,6 +27,7 @@ export const pro = product({
 export const freePlan = product({
 	id: 'free_plan',
 	name: 'Free Plan',
+	is_default: true,
 	items: [
 		featureItem({
 			feature_id: messages.id,

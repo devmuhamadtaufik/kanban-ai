@@ -93,7 +93,8 @@ export const { track, check, usage, query, listProducts } = autumn.api();
 
 - The `identify` function maps the **active organization** (from the Better Auth organization plugin) to the Autumn customer
 - Use the Better Auth organization `id` as the `customerId`; the subscription follows the organization, so all members share it and switching organizations switches the billing context
-- Every user has a personal organization (auto-created on sign-up), so B2C apps work without any extra setup
+- Every user has a personal organization (auto-created on sign-up), and every organization provisions an Autumn customer in the Better Auth `afterCreateOrganization` hook
+- Configure the free product as default (`is_default: true` in the current `atmn` config shape; `autoEnable: true` in newer Autumn docs) so new customers start on the free tier automatically
 - Catch authentication errors gracefully - unauthenticated users can still view products
 - Only export member-safe API methods publicly; subscription-mutating operations are wrapped in `billing.ts` actions that require the `owner` or `admin` organization role
 
@@ -117,6 +118,7 @@ export const messages = feature({
 export const free = product({
 	id: 'free_plan',
 	name: 'Free Plan',
+	is_default: true,
 	items: [
 		featureItem({
 			feature_id: messages.id,
@@ -192,9 +194,9 @@ export const billingPortal = action({
 
 **Important:**
 
-- Always call `createCustomer` before `checkout` or `billingPortal` to ensure the customer exists
-- `createCustomer` is idempotent - it won't error if the customer already exists
-- Use wrapper actions to handle customer creation automatically
+- Organizations create their Autumn customer in Better Auth's `afterCreateOrganization` hook, so billing page reads do not need a repair/create call
+- Keep `createCustomer`/`customers.create` before checkout, billing portal, and future feature `check`/`track` wrappers as a defensive idempotent guard
+- Mark the free product as default so Autumn grants the free tier when the customer is created
 
 ## Frontend Integration
 
@@ -334,7 +336,7 @@ export const trackUsage = action({
 
 ## Best Practices
 
-1. **Customer Creation**: Always ensure customers exist before checkout or billing operations
+1. **Customer Creation**: Provision the Autumn customer when the Better Auth organization is created; keep idempotent guards before checkout, billing portal, feature checks, and usage tracking
 2. **Error Handling**: Wrap Autumn calls in try-catch blocks and handle errors gracefully
 3. **Authentication**: Use the `identify` function to automatically map authenticated users to customers
 4. **Product IDs**: Use consistent product IDs between `autumn.config.ts` and your frontend
