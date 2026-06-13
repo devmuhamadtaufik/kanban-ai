@@ -2,15 +2,17 @@
 	import { api } from '$convex/_generated/api.js';
 	import { Separator } from '$lib/components/ui/separator/index.js';
 	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
+	import * as Alert from '$lib/components/ui/alert/index.js';
 	import * as Card from '$lib/components/ui/card/index.js';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { Check } from '@lucide/svelte';
 
+	import { invalidateAll } from '$app/navigation';
 	import { useConvexClient, useQuery } from '@mmailaender/convex-svelte';
 	import { showErrorToast } from '$lib/toast.js';
 	import { canManageOrganization } from '$lib/organizations.js';
-	import type { Customer } from 'autumn-js';
+	import type { Customer, ListPlansList } from 'autumn-js';
 	import type { PageData } from './$types';
 	import { siteConfig } from '$lib/config.js';
 
@@ -23,17 +25,6 @@
 	let organization = $derived(organizationResponse.data);
 	let canManageBilling = $derived(canManageOrganization(organization?.currentMemberRole));
 
-	interface Product {
-		id: string;
-		name: string;
-		items?: Array<{
-			price?: number;
-			interval?: string;
-			feature_id?: string;
-			included_usage?: number | 'inf';
-		}>;
-	}
-
 	interface Plan {
 		id: string;
 		name: string;
@@ -43,23 +34,26 @@
 		isCurrent: boolean;
 	}
 
-	// Get Convex client for actions (checkout/portal)
+	// Get Convex client for actions (attach/portal)
 	const client = useConvexClient();
 
 	// Derived from the server load data so they stay in sync if `data` changes
 	// (e.g. on client-side navigation / invalidation), rather than capturing only
 	// the initial value.
-	let products = $derived<Product[]>(data.products || []);
-	// The Autumn customer for the active organization (null before first checkout),
+	let availablePlans = $derived<ListPlansList[]>(data.plans || []);
+	// The Autumn customer for the active organization (null until provisioned),
 	// typed by autumn-js via the api.billing.getCustomer return type
 	let customerData = $derived<Customer | null>(data.customerData?.data ?? null);
 
-	async function handleCheckout(productId: string) {
+	async function handleAttach(planId: string) {
 		try {
-			const result = await client.action(api.billing.checkout, { productId });
+			const result = await client.action(api.billing.attach, { planId });
 			if (result?.error) throw new Error(result.error.message);
-			if (result?.data?.url) {
-				window.location.href = result.data.url;
+			if (result?.data?.paymentUrl) {
+				window.location.href = result.data.paymentUrl;
+			} else {
+				// Plan changes that need no payment input apply immediately
+				await invalidateAll();
 			}
 		} catch (error) {
 			showErrorToast(error, 'Failed to start checkout');
@@ -78,66 +72,36 @@
 		}
 	}
 
-	// Get active product IDs from customer data
-	// customerData.products is an array of product objects with { id, status }
-	let activeProductIds = $derived<string[]>(
-		Array.isArray(customerData?.products)
-			? customerData.products
-					.filter((product) => product.status === 'active')
-					.map((product) => product.id)
-			: []
+	// Plan IDs of the organization's active subscriptions (the auto-enabled
+	// free plan shows up here too)
+	let activePlanIds = $derived<string[]>(
+		(customerData?.subscriptions ?? [])
+			.filter((subscription) => subscription.status === 'active')
+			.map((subscription) => subscription.planId)
 	);
 
-	// Get current plan info from customerData.products (active subscription)
-	let currentPlan = $derived.by<Plan | null>(() => {
-		if (!customerData?.products || activeProductIds.length === 0) return null;
-
-		const activeCustomerProduct = customerData.products.find(
-			(product) => product.status === 'active' && activeProductIds.includes(product.id)
-		);
-		if (!activeCustomerProduct) return null;
-
-		const priceItem = activeCustomerProduct.items?.find((item) => item.type === 'price');
-		const featureItem = activeCustomerProduct.items?.find(
-			(item) => item.type === 'feature' && item.feature_id === 'messages'
-		);
-
-		return {
-			id: activeCustomerProduct.id,
-			name: activeCustomerProduct.name ?? activeCustomerProduct.id,
-			price: priceItem?.price || 0,
-			interval: priceItem?.interval || 'month',
-			features: [
-				`${featureItem?.included_usage || 0} messages per month`,
-				activeCustomerProduct.id === 'pro' ? 'Priority support' : 'Basic support',
-				activeCustomerProduct.id === 'pro' ? 'Advanced features' : 'Community access'
-			],
-			isCurrent: true
-		};
-	});
-
-	// Map products to display format
+	// Map plans to display format
 	let plans = $derived<Plan[]>(
-		Array.isArray(products)
-			? products.map((product) => {
-					const priceItem = product.items?.find((item) => item.price);
-					const featureItem = product.items?.find((item) => item.feature_id === 'messages');
+		availablePlans.map((plan) => {
+			const messagesItem = plan.items?.find((item) => item.featureId === 'messages');
+			const included = messagesItem?.unlimited ? 'Unlimited' : (messagesItem?.included ?? 0);
 
-					return {
-						id: product.id,
-						name: product.name,
-						price: priceItem?.price || 0,
-						interval: priceItem?.interval || 'month',
-						features: [
-							`${featureItem?.included_usage || 0} messages per month`,
-							product.id === 'pro' ? 'Priority support' : 'Basic support',
-							product.id === 'pro' ? 'Advanced features' : 'Community access'
-						],
-						isCurrent: activeProductIds.includes(product.id)
-					};
-				})
-			: []
+			return {
+				id: plan.id,
+				name: plan.name,
+				price: plan.price?.amount ?? 0,
+				interval: plan.price?.interval ?? 'month',
+				features: [
+					`${included} messages per month`,
+					plan.id === 'pro' ? 'Priority support' : 'Basic support',
+					plan.id === 'pro' ? 'Advanced features' : 'Community access'
+				],
+				isCurrent: activePlanIds.includes(plan.id)
+			};
+		})
 	);
+
+	let currentPlan = $derived<Plan | null>(plans.find((plan) => plan.isCurrent) ?? null);
 </script>
 
 <svelte:head>
@@ -172,6 +136,13 @@
 		</div>
 
 		<Separator />
+
+		{#if data.billingError}
+			<Alert.Root variant="destructive">
+				<Alert.Title>Billing is unavailable</Alert.Title>
+				<Alert.Description>{data.billingError}</Alert.Description>
+			</Alert.Root>
+		{/if}
 
 		<!-- Current Plan Section -->
 		<div class="space-y-4">
@@ -255,7 +226,7 @@
 								{#if plan.isCurrent}
 									<Button variant="outline" disabled class="w-full">Current Plan</Button>
 								{:else}
-									<Button class="w-full" onclick={() => handleCheckout(plan.id)}>
+									<Button class="w-full" onclick={() => handleAttach(plan.id)}>
 										{plan.price === 0 ? 'Downgrade' : 'Upgrade'}
 									</Button>
 								{/if}

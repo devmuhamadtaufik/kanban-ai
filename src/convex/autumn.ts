@@ -1,35 +1,71 @@
-import { components } from './_generated/api';
-import { Autumn } from '@useautumn/convex';
-import { type GenericCtx } from '@convex-dev/better-auth';
-import { type DataModel } from './_generated/dataModel';
-import { resolveActiveOrganization } from './organizations';
+import { Autumn, AutumnError } from 'autumn-js';
+import { ConvexError } from 'convex/values';
 
-export const autumn = new Autumn(components.autumn, {
-	secretKey: process.env.AUTUMN_SECRET_KEY ?? '',
-	// Billing is scoped to the active organization, not the user. Every user
-	// gets a personal organization on sign-up, so this works unchanged for
-	// B2C (personal org = the customer) and B2B (shared org = the customer).
-	identify: async (ctx: GenericCtx<DataModel>) => {
+/**
+ * Direct autumn-js SDK client (Autumn API v2). The `@useautumn/convex`
+ * component is intentionally not used: it is pinned to the deprecated v1 API
+ * and its value-add (React hooks, identify-scoped calls) doesn't apply to a
+ * SvelteKit app. Every call passes an explicit `customerId` instead — the
+ * active organization's id, resolved in `billing.ts`.
+ *
+ * This module stays free of Convex function imports so `auth.ts` and
+ * `admin.ts` can use it without creating import cycles.
+ */
+export function getAutumn(): Autumn | null {
+	const secretKey = process.env.AUTUMN_SECRET_KEY;
+	if (!secretKey) return null;
+	return new Autumn({ secretKey });
+}
+
+export function requireAutumn(): Autumn {
+	const autumn = getAutumn();
+	if (!autumn) {
+		// ConvexError data reaches the client even in production (plain Error
+		// messages are redacted), so the UI can show a meaningful toast.
+		throw new ConvexError('Billing is not configured');
+	}
+	return autumn;
+}
+
+// Errors are surfaced as plain { message, code } values so action results
+// stay Convex-serializable and the UI can show them directly.
+export interface BillingError {
+	message: string;
+	code: string;
+}
+
+/**
+ * The SDK throws `AutumnError` on non-2xx responses; the API's
+ * `{ message, code }` payload is only available as the raw response body.
+ */
+export function toBillingError(error: unknown): BillingError {
+	if (error instanceof AutumnError) {
 		try {
-			const resolved = await resolveActiveOrganization(ctx);
-			if (!resolved) return null;
-
+			const body = JSON.parse(error.body) as { message?: string; code?: string };
 			return {
-				customerId: resolved.organization.id,
-				customerData: {
-					name: resolved.organization.name,
-					// Billing contact: the member currently acting on behalf of the org
-					email: resolved.session.user.email
-				}
+				message: body.message ?? error.message,
+				code: body.code ?? `http_${error.statusCode}`
 			};
 		} catch {
-			// User is not authenticated, return null
-			return null;
+			return { message: error.message, code: `http_${error.statusCode}` };
 		}
 	}
-});
+	return {
+		message: error instanceof Error ? error.message : String(error),
+		code: 'unknown'
+	};
+}
 
-// Only member-safe operations are exposed as public Convex functions.
-// Subscription-mutating operations (checkout, attach, cancel, billing portal,
-// ...) go through `billing.ts`, which checks the caller's organization role.
-export const { track, check, usage, query, listProducts } = autumn.api();
+/**
+ * Organizations normally get their Autumn customer at creation time
+ * (`afterCreateOrganization` in auth.ts), but customers created before
+ * billing was configured may not have one — treat that as "no billing data"
+ * rather than an error.
+ */
+export function isCustomerNotFound(error: unknown): boolean {
+	return (
+		error instanceof AutumnError &&
+		error.statusCode === 404 &&
+		toBillingError(error).code === 'customer_not_found'
+	);
+}

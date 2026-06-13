@@ -404,7 +404,7 @@ async function handleSync() {
 2. **Conditional Queries**: Return `'skip'` from the args closure to pause the subscription; never call `useQuery` inside `$derived`
 3. **Client Operations**: Use `useConvexClient()` then `client.mutation()` and `client.action()` for writes
 4. **Automatic Updates**: Data automatically updates in real-time when Convex database changes
-5. **Skipped Queries**: A skipped query reports `isLoading: true` with `data: undefined` until its condition holds
+5. **Skipped Queries**: A skipped query reports `isLoading: false`, `error: null`, and `data: undefined` (it holds no active subscription) until its condition holds
 6. **Loading States**: Access `query.isLoading` for loading indicators
 7. **Error Handling**: Access `query.error` for error states
 

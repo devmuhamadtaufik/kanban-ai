@@ -57,7 +57,15 @@ interface ActionEmailArgs {
 	footerLine: string;
 }
 
-/** Simple shared HTML template for emails with a single call-to-action button. */
+/**
+ * Simple shared HTML template for emails with a single call-to-action button.
+ *
+ * `greeting`, `bodyLines`, and `footerLine` are inserted as raw HTML so callers
+ * can include intentional markup (e.g. `<strong>`); callers MUST therefore wrap
+ * any user-controlled value in `escapeHtml` first. `ctaUrl` is interpolated into
+ * `href` attributes unescaped, so it must be a trusted, server-generated URL —
+ * never a raw user-supplied string.
+ */
 export function actionEmailHtml({
 	greeting,
 	bodyLines,

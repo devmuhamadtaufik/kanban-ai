@@ -1,8 +1,9 @@
-import { action } from './_generated/server';
+import { action, internalAction } from './_generated/server';
 import { ConvexError, v } from 'convex/values';
 import { type GenericCtx } from '@convex-dev/better-auth';
 import { type DataModel } from './_generated/dataModel';
-import { autumn } from './autumn';
+import { type Autumn } from 'autumn-js';
+import { isCustomerNotFound, requireAutumn, toBillingError, type BillingError } from './autumn';
 import { resolveActiveOrganization } from './organizations';
 import { canManageOrganization } from '../lib/organizations';
 
@@ -11,108 +12,228 @@ if (!process.env.SITE_URL && process.env.BETTER_AUTH_URL) {
 	process.env.SITE_URL = process.env.BETTER_AUTH_URL;
 }
 
-// Re-export listProducts as-is.
-export { listProducts } from './autumn';
+/**
+ * Billing is scoped to the active organization, not the user. Every user
+ * gets a personal organization on sign-up, so this works unchanged for
+ * B2C (personal org = the customer) and B2B (shared org = the customer).
+ * The organization id is the Autumn customer id.
+ */
+async function identifyBillingCustomer(ctx: GenericCtx<DataModel>) {
+	try {
+		const resolved = await resolveActiveOrganization(ctx);
+		if (!resolved) return null;
+		return {
+			customerId: resolved.organization.id,
+			name: resolved.organization.name,
+			// Billing contact: the member currently acting on behalf of the org
+			email: resolved.session.user.email
+		};
+	} catch {
+		// User is not authenticated
+		return null;
+	}
+}
 
 /**
- * Billing is scoped to the active organization (see autumn.ts identify).
  * Subscription-mutating operations are restricted to owners and admins;
  * regular members can view billing state but not change it.
  */
 async function requireBillingManager(ctx: GenericCtx<DataModel>) {
 	const resolved = await resolveActiveOrganization(ctx);
 	if (!resolved) {
-		// ConvexError data reaches the client even in production (plain Error
-		// messages are redacted), so the UI can show a meaningful toast.
 		throw new ConvexError('No active organization');
 	}
 	if (!canManageOrganization(resolved.currentMemberRole)) {
 		throw new ConvexError('Only organization owners and admins can manage billing');
 	}
-	return resolved;
+	return {
+		customerId: resolved.organization.id,
+		name: resolved.organization.name,
+		email: resolved.session.user.email
+	};
 }
 
-// Errors are returned as plain { message, code } values so the result is
-// Convex-serializable and the UI can show them directly.
 const billingErrorValidator = v.union(
 	v.null(),
 	v.object({ message: v.string(), code: v.string() })
 );
+const billingResultValidator = v.object({ data: v.any(), error: billingErrorValidator });
 
-// Get customer subscription data for the active organization. Readable by
-// any member; a customer that doesn't exist yet (no checkout) is `null`.
-export const getCustomer = action({
-	args: {},
-	returns: v.object({ data: v.any(), error: billingErrorValidator }),
-	handler: async (ctx) => {
-		const resolved = await resolveActiveOrganization(ctx);
-		if (!resolved) {
-			return { data: null, error: { message: 'No active organization', code: 'no_organization' } };
-		}
+const noOrganizationError: BillingError = {
+	message: 'No active organization',
+	code: 'no_organization'
+};
 
-		const { data, error } = await autumn.customers.get(ctx);
-		if (error && error.code !== 'customer_not_found') {
-			console.error('Error getting customer:', error);
-			return { data: null, error: { message: error.message, code: error.code } };
-		}
-		return { data: data ?? null, error: null };
-	}
-});
-
-// Ensure the Autumn customer exists for the active organization (idempotent).
-// Unlike the other Autumn instance methods, `customers.create` does not use
-// the identify hook, so the organization's data is passed explicitly.
-async function ensureCustomer(
-	ctx: GenericCtx<DataModel>,
-	resolved: NonNullable<Awaited<ReturnType<typeof resolveActiveOrganization>>>
-) {
-	const customer = {
-		id: resolved.organization.id,
-		name: resolved.organization.name,
-		email: resolved.session.user.email
-	};
-	const created = await autumn.customers.create(ctx, customer);
-	if (!created.error) return;
-
-	const updated = await autumn.customers.update(ctx, {
-		name: customer.name,
-		email: customer.email
-	});
-	if (!updated.error) return;
-
-	const error = updated.error ?? created.error;
-	if (error) {
-		console.error('Failed to create Autumn customer:', error);
-		throw new ConvexError(`Failed to prepare billing: ${error.message}`);
+// Run an Autumn call, provisioning the organization's customer and retrying
+// once if it doesn't exist yet. Customers are provisioned when the
+// organization is created (see auth.ts), but that hook only logs failures —
+// this is the recovery path that keeps billing self-healing afterwards.
+async function withCustomerRecovery<T>(
+	autumn: Autumn,
+	customer: { customerId: string; name: string; email: string },
+	fn: () => Promise<T>
+): Promise<T> {
+	try {
+		return await fn();
+	} catch (error) {
+		if (!isCustomerNotFound(error)) throw error;
+		await autumn.customers.getOrCreate({
+			customerId: customer.customerId,
+			name: customer.name,
+			email: customer.email
+		});
+		return await fn();
 	}
 }
 
-// Checkout for the active organization; creates the customer on first use
-export const checkout = action({
-	args: { productId: v.string() },
-	returns: v.object({ data: v.any(), error: billingErrorValidator }),
-	handler: async (ctx, args) => {
-		const resolved = await requireBillingManager(ctx);
-		await ensureCustomer(ctx, resolved);
-		const { data, error } = await autumn.checkout(ctx, { productId: args.productId });
-		return {
-			data: data ?? null,
-			error: error ? { message: error.message, code: error.code } : null
-		};
+// List available plans with pricing and feature items. Public: unauthenticated
+// users can view the pricing page.
+export const listPlans = action({
+	args: {},
+	returns: billingResultValidator,
+	handler: async () => {
+		try {
+			const autumn = requireAutumn();
+			const { list } = await autumn.plans.list();
+			return { data: { list }, error: null };
+		} catch (error) {
+			console.error('Error listing plans:', error);
+			return { data: null, error: toBillingError(error) };
+		}
 	}
 });
 
-// Billing portal for the active organization; creates the customer on first use
+// Get customer subscription state for the active organization. Readable by
+// any member. `getOrCreate` provisions the customer (and its auto-enabled
+// free plan) if the creation hook in auth.ts failed.
+export const getCustomer = action({
+	args: {},
+	returns: billingResultValidator,
+	handler: async (ctx) => {
+		const customer = await identifyBillingCustomer(ctx);
+		if (!customer) return { data: null, error: noOrganizationError };
+
+		try {
+			const autumn = requireAutumn();
+			const data = await autumn.customers.getOrCreate({
+				customerId: customer.customerId,
+				name: customer.name,
+				email: customer.email
+			});
+			return { data, error: null };
+		} catch (error) {
+			console.error('Error getting customer:', error);
+			return { data: null, error: toBillingError(error) };
+		}
+	}
+});
+
+// Attach a plan to the active organization (new subscription, upgrade or
+// downgrade). Returns `paymentUrl` when the customer must complete payment
+// through Stripe checkout; plan changes that need no payment input apply
+// immediately and return a null `paymentUrl`.
+export const attach = action({
+	args: { planId: v.string() },
+	returns: billingResultValidator,
+	handler: async (ctx, args) => {
+		const customer = await requireBillingManager(ctx);
+		try {
+			const autumn = requireAutumn();
+			const data = await withCustomerRecovery(autumn, customer, () =>
+				autumn.billing.attach({
+					customerId: customer.customerId,
+					planId: args.planId,
+					redirectMode: 'if_required'
+				})
+			);
+			return { data, error: null };
+		} catch (error) {
+			console.error('Error attaching plan:', error);
+			return { data: null, error: toBillingError(error) };
+		}
+	}
+});
+
+// Stripe billing portal for the active organization (payment methods,
+// invoices, cancellation).
 export const billingPortal = action({
 	args: {},
-	returns: v.object({ data: v.any(), error: billingErrorValidator }),
+	returns: billingResultValidator,
 	handler: async (ctx) => {
-		const resolved = await requireBillingManager(ctx);
-		await ensureCustomer(ctx, resolved);
-		const { data, error } = await autumn.customers.billingPortal(ctx, {});
-		return {
-			data: data ?? null,
-			error: error ? { message: error.message, code: error.code } : null
-		};
+		const customer = await requireBillingManager(ctx);
+		try {
+			const autumn = requireAutumn();
+			const data = await withCustomerRecovery(autumn, customer, () =>
+				autumn.billing.openCustomerPortal({
+					customerId: customer.customerId
+				})
+			);
+			return { data, error: null };
+		} catch (error) {
+			console.error('Error opening billing portal:', error);
+			return { data: null, error: toBillingError(error) };
+		}
+	}
+});
+
+// Check whether the active organization has balance left for a feature.
+// Member-safe and strictly read-only — usage is only ever recorded through
+// the internal `track` below.
+export const check = action({
+	args: {
+		featureId: v.string(),
+		requiredBalance: v.optional(v.number())
+	},
+	returns: billingResultValidator,
+	handler: async (ctx, args) => {
+		const customer = await identifyBillingCustomer(ctx);
+		if (!customer) return { data: null, error: noOrganizationError };
+
+		try {
+			const autumn = requireAutumn();
+			const data = await withCustomerRecovery(autumn, customer, () =>
+				autumn.check({
+					customerId: customer.customerId,
+					featureId: args.featureId,
+					requiredBalance: args.requiredBalance
+				})
+			);
+			return { data, error: null };
+		} catch (error) {
+			console.error('Error checking feature access:', error);
+			return { data: null, error: toBillingError(error) };
+		}
+	}
+});
+
+// Record usage of a feature for the active organization. Internal only: call
+// it from trusted server-side code (`ctx.runAction(internal.billing.track,
+// ...)`) after the feature action actually happened. Exposing it to clients
+// would let any member consume — or, with negative values, mint — the
+// organization's balance directly.
+export const track = internalAction({
+	args: {
+		featureId: v.string(),
+		value: v.optional(v.number())
+	},
+	returns: billingResultValidator,
+	handler: async (ctx, args) => {
+		const customer = await identifyBillingCustomer(ctx);
+		if (!customer) return { data: null, error: noOrganizationError };
+
+		try {
+			const autumn = requireAutumn();
+			const data = await withCustomerRecovery(autumn, customer, () =>
+				autumn.track({
+					customerId: customer.customerId,
+					featureId: args.featureId,
+					value: args.value
+				})
+			);
+			return { data, error: null };
+		} catch (error) {
+			console.error('Error tracking usage:', error);
+			return { data: null, error: toBillingError(error) };
+		}
 	}
 });

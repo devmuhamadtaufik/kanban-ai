@@ -32,6 +32,9 @@
 
 	async function handleConfirm() {
 		if (!confirmAction || isProcessing) return;
+		// Capture before clearing it below, so the catch message is still
+		// accurate if one of the post-success awaits throws.
+		const action = confirmAction;
 		isProcessing = true;
 		try {
 			if (confirmAction === 'leave') {
@@ -52,7 +55,7 @@
 			await invalidateAll();
 			goto(resolve('/dashboard'));
 		} catch (error) {
-			showErrorToast(error, `Failed to ${confirmAction} organization`);
+			showErrorToast(error, `Failed to ${action} organization`);
 		} finally {
 			isProcessing = false;
 		}

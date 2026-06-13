@@ -60,7 +60,7 @@
 
 	interface BillingSummary {
 		customerExists: boolean;
-		products: Array<{ name: string; status: string }>;
+		plans: Array<{ name: string; status: string }>;
 	}
 
 	let billing = $state<BillingSummary | null>(null);
@@ -75,10 +75,10 @@
 			if (selectedOrganizationId !== organizationId) return;
 			billing = {
 				customerExists: Boolean(result?.data),
-				products: (result?.data?.products ?? []).map(
-					(product: { name?: string | null; id: string; status: string }) => ({
-						name: product.name ?? product.id,
-						status: product.status
+				plans: (result?.data?.subscriptions ?? []).map(
+					(subscription: { plan?: { name?: string | null }; planId: string; status: string }) => ({
+						name: subscription.plan?.name ?? subscription.planId,
+						status: subscription.status
 					})
 				)
 			};
@@ -231,14 +231,14 @@
 					<h3 class="text-sm font-semibold">Billing</h3>
 					{#if isBillingLoading}
 						<Skeleton class="h-6 w-1/2" />
-					{:else if billing?.products.length}
+					{:else if billing?.plans.length}
 						<div class="flex flex-wrap gap-2">
-							{#each billing.products as product (product.name)}
-								<Badge variant="outline">{product.name} · {product.status}</Badge>
+							{#each billing.plans as plan (plan.name)}
+								<Badge variant="outline">{plan.name} · {plan.status}</Badge>
 							{/each}
 						</div>
 					{:else if billing?.customerExists}
-						<p class="text-sm text-muted-foreground">Customer exists, no products attached.</p>
+						<p class="text-sm text-muted-foreground">Customer exists, no plans attached.</p>
 					{:else}
 						<p class="text-sm text-muted-foreground">No billing customer yet.</p>
 					{/if}

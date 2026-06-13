@@ -1,7 +1,7 @@
 import { action, query } from './_generated/server';
 import { ConvexError, v } from 'convex/values';
 import { paginationOptsValidator } from 'convex/server';
-import { Autumn } from 'autumn-js';
+import { isCustomerNotFound, requireAutumn, toBillingError } from './autumn';
 import { type DataModel } from './_generated/dataModel';
 import { type GenericCtx } from '@convex-dev/better-auth';
 import { authComponent } from './auth';
@@ -199,9 +199,9 @@ export const getOrganization = query({
 	}
 });
 
-// Billing state for any organization (admin-only). Uses the Autumn SDK
-// directly because the Autumn component's identify hook is scoped to the
-// caller's own active organization.
+// Billing state for any organization (admin-only). Unlike billing.ts, the
+// customer id comes from the argument rather than the caller's active
+// organization.
 export const getOrganizationBilling = action({
 	args: { organizationId: v.string() },
 	returns: v.object({
@@ -210,11 +210,13 @@ export const getOrganizationBilling = action({
 	}),
 	handler: async (ctx, args) => {
 		await requireAdmin(ctx);
-		const autumn = new Autumn({ secretKey: process.env.AUTUMN_SECRET_KEY ?? '' });
-		const { data, error } = await autumn.customers.get(args.organizationId);
-		if (error && error.code !== 'customer_not_found') {
-			return { data: null, error: { message: error.message, code: error.code } };
+		try {
+			const autumn = requireAutumn();
+			const data = await autumn.customers.get({ customerId: args.organizationId });
+			return { data, error: null };
+		} catch (error) {
+			if (isCustomerNotFound(error)) return { data: null, error: null };
+			return { data: null, error: toBillingError(error) };
 		}
-		return { data: data ?? null, error: null };
 	}
 });

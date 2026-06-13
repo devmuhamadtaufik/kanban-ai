@@ -15,6 +15,9 @@ to the active organization instead of the user.
   Deleting an organization cancels its subscription.
 - **Admin**: new `/admin/organizations` page (list, search, detail with members +
   billing) and user impersonation from `/admin/users`.
+- **Autumn v2**: dropped the `@useautumn/convex` component (pinned to the
+  deprecated v1 API) and call the `autumn-js` 1.x SDK directly from Convex
+  actions — `checkout` is now `attach`, products are now plans.
 
 ## 2026-06-10 — Vite 8 (Rolldown-powered)
 

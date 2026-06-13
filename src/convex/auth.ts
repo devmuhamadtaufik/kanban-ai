@@ -6,7 +6,7 @@ import { query } from './_generated/server';
 import { betterAuth, type BetterAuthOptions } from 'better-auth';
 import { APIError } from 'better-auth/api';
 import { admin, organization } from 'better-auth/plugins';
-import { Autumn } from 'autumn-js';
+import { getAutumn, isCustomerNotFound } from './autumn';
 import authSchema from './betterAuth/schema';
 import authConfig from './auth.config';
 import { actionEmailHtml, escapeHtml, sendEmail } from './email';
@@ -27,26 +27,16 @@ async function createAutumnCustomerForOrganization({
 	organization: { id: string; name: string };
 	user: { email: string };
 }) {
-	const secretKey = process.env.AUTUMN_SECRET_KEY;
-	if (!secretKey) return;
+	const autumn = getAutumn();
+	if (!autumn) return;
 
-	const autumn = new Autumn({ secretKey });
-	const customer = {
-		id: organization.id,
-		name: organization.name,
-		email: user.email
-	};
-	const created = await autumn.customers.create(customer);
-	if (!created.error) return;
-
-	const updated = await autumn.customers.update(customer.id, {
-		name: customer.name,
-		email: customer.email
-	});
-	if (!updated.error) return;
-
-	const error = updated.error ?? created.error;
-	if (error) {
+	try {
+		await autumn.customers.getOrCreate({
+			customerId: organization.id,
+			name: organization.name,
+			email: user.email
+		});
+	} catch (error) {
 		// Don't throw from afterCreateOrganization: Better Auth has already
 		// persisted the org/member rows by then, so throwing would fail the
 		// request without rolling those writes back.
@@ -304,12 +294,18 @@ export const createOptions = (ctx: GenericCtx<DataModel>) =>
 						}
 						// Clean up billing before the organization disappears. Failing
 						// here aborts the deletion rather than orphaning a paid
-						// subscription.
-						const secretKey = process.env.AUTUMN_SECRET_KEY;
-						if (!secretKey) return;
-						const autumn = new Autumn({ secretKey });
-						const { error } = await autumn.customers.delete(organization.id);
-						if (error && error.code !== 'customer_not_found') {
+						// subscription. Autumn's delete does NOT touch Stripe on its
+						// own; `deleteInStripe` deletes the Stripe customer, which
+						// immediately cancels any active subscriptions.
+						const autumn = getAutumn();
+						if (!autumn) return;
+						try {
+							await autumn.customers.delete({
+								customerId: organization.id,
+								deleteInStripe: true
+							});
+						} catch (error) {
+							if (isCustomerNotFound(error)) return;
 							console.error('Failed to delete Autumn customer:', error);
 							throw new APIError('INTERNAL_SERVER_ERROR', {
 								message: "Failed to cancel the organization's subscription"
