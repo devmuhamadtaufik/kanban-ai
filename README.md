@@ -76,7 +76,7 @@ After cloning, make it yours:
 
 ### Prerequisites
 
-- Node.js 18+
+- Node.js 24+ (see `.node-version`)
 - pnpm (recommended) or npm
 
 ### Installation

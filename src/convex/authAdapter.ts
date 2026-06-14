@@ -72,6 +72,39 @@ export const countOwnedOrganizations = async (
 	return count;
 };
 
+type DeleteManyInput = FunctionArgs<typeof components.betterAuth.adapter.deleteMany>['input'];
+
+/**
+ * Delete every row matching `where`, looping until the paginated delete is
+ * done. Returns the number of rows removed.
+ *
+ * This is the one place organization/member/invitation rows are deleted
+ * outside the Better Auth API (see the policy note above): the user-deletion
+ * cascade in `auth.ts` can't go through the org API — it runs in the admin's
+ * session (not a member of the deleted user's orgs) and the
+ * `beforeDeleteOrganization` guard intentionally blocks removing a user's last
+ * owned org.
+ */
+export const deleteMany = async (
+	ctx: GenericCtx<DataModel>,
+	args: { model: AuthModel; where: Where[] }
+): Promise<number> => {
+	if (!('runMutation' in ctx)) {
+		throw new Error('deleteMany requires a mutation or action context');
+	}
+	const input = { model: args.model, where: args.where } as unknown as DeleteManyInput;
+	let deleted = 0;
+	for (;;) {
+		const result = await ctx.runMutation(components.betterAuth.adapter.deleteMany, {
+			input,
+			paginationOpts: { numItems: 200, cursor: null }
+		});
+		deleted += result.count;
+		if (result.isDone || result.count === 0) break;
+	}
+	return deleted;
+};
+
 type UpdateManyInput = FunctionArgs<typeof components.betterAuth.adapter.updateMany>['input'];
 
 export const updateMany = async (

@@ -3,6 +3,9 @@
 	"private": true,
 	"version": "0.0.1",
 	"type": "module",
+	"engines": {
+		"node": ">=24.0.0"
+	},
 	"scripts": {
 		"dev": "vite dev",
 		"build": "vite build",
@@ -31,7 +34,7 @@
 		"@tanstack/table-core": "^8.21.3",
 		"@types/d3-scale": "^4.0.9",
 		"@types/d3-shape": "^3.1.7",
-		"@types/node": "^22",
+		"@types/node": "^24.13.2",
 		"atmn": "^1.1.8",
 		"bits-ui": "^2.11.4",
 		"clsx": "^2.1.1",

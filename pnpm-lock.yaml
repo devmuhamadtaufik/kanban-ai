@@ -10,19 +10,19 @@ importers:
     dependencies:
       '@convex-dev/better-auth':
         specifier: ^0.12.2
-        version: 0.12.2(@standard-schema/spec@1.1.0)(better-auth@1.6.16(@cloudflare/workers-types@4.20250927.0)(@sveltejs/kit@2.64.0(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.56.3(@typescript-eslint/types@8.44.1))(vite@8.0.16(@types/node@22.18.6)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1)))(svelte@5.56.3(@typescript-eslint/types@8.44.1))(typescript@5.9.2)(vite@8.0.16(@types/node@22.18.6)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1)))(react-dom@19.1.1(react@19.2.7))(react@19.2.7)(svelte@5.56.3(@typescript-eslint/types@8.44.1)))(convex@1.41.0(react@19.2.7))(react@19.2.7)(typescript@5.9.2)
+        version: 0.12.2(@standard-schema/spec@1.1.0)(better-auth@1.6.16(@cloudflare/workers-types@4.20250927.0)(@sveltejs/kit@2.64.0(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.56.3(@typescript-eslint/types@8.44.1))(vite@8.0.16(@types/node@24.13.2)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1)))(svelte@5.56.3(@typescript-eslint/types@8.44.1))(typescript@5.9.2)(vite@8.0.16(@types/node@24.13.2)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1)))(react-dom@19.1.1(react@19.2.7))(react@19.2.7)(svelte@5.56.3(@typescript-eslint/types@8.44.1)))(convex@1.41.0(react@19.2.7))(react@19.2.7)(typescript@5.9.2)
       '@mmailaender/convex-better-auth-svelte':
         specifier: ^0.7.4
-        version: 0.7.4(0c88fd5c717764bff7418892ffc86fe0)
+        version: 0.7.4(a619b8e5c1f39e9e65538563f875cf52)
       '@mmailaender/convex-svelte':
         specifier: ^0.19.0
-        version: 0.19.0(@sveltejs/kit@2.64.0(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.56.3(@typescript-eslint/types@8.44.1))(vite@8.0.16(@types/node@22.18.6)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1)))(svelte@5.56.3(@typescript-eslint/types@8.44.1))(typescript@5.9.2)(vite@8.0.16(@types/node@22.18.6)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1)))(convex@1.41.0(react@19.2.7))(svelte@5.56.3(@typescript-eslint/types@8.44.1))(zod@4.4.3)
+        version: 0.19.0(@sveltejs/kit@2.64.0(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.56.3(@typescript-eslint/types@8.44.1))(vite@8.0.16(@types/node@24.13.2)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1)))(svelte@5.56.3(@typescript-eslint/types@8.44.1))(typescript@5.9.2)(vite@8.0.16(@types/node@24.13.2)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1)))(convex@1.41.0(react@19.2.7))(svelte@5.56.3(@typescript-eslint/types@8.44.1))(zod@4.4.3)
       autumn-js:
         specifier: ^1.2.28
-        version: 1.2.28(better-auth@1.6.16(@cloudflare/workers-types@4.20250927.0)(@sveltejs/kit@2.64.0(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.56.3(@typescript-eslint/types@8.44.1))(vite@8.0.16(@types/node@22.18.6)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1)))(svelte@5.56.3(@typescript-eslint/types@8.44.1))(typescript@5.9.2)(vite@8.0.16(@types/node@22.18.6)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1)))(react-dom@19.1.1(react@19.2.7))(react@19.2.7)(svelte@5.56.3(@typescript-eslint/types@8.44.1)))(better-call@1.3.6(zod@4.4.3))(react@19.2.7)
+        version: 1.2.28(better-auth@1.6.16(@cloudflare/workers-types@4.20250927.0)(@sveltejs/kit@2.64.0(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.56.3(@typescript-eslint/types@8.44.1))(vite@8.0.16(@types/node@24.13.2)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1)))(svelte@5.56.3(@typescript-eslint/types@8.44.1))(typescript@5.9.2)(vite@8.0.16(@types/node@24.13.2)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1)))(react-dom@19.1.1(react@19.2.7))(react@19.2.7)(svelte@5.56.3(@typescript-eslint/types@8.44.1)))(better-call@1.3.6(zod@4.4.3))(react@19.2.7)
       better-auth:
         specifier: ~1.6.15
-        version: 1.6.16(@cloudflare/workers-types@4.20250927.0)(@sveltejs/kit@2.64.0(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.56.3(@typescript-eslint/types@8.44.1))(vite@8.0.16(@types/node@22.18.6)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1)))(svelte@5.56.3(@typescript-eslint/types@8.44.1))(typescript@5.9.2)(vite@8.0.16(@types/node@22.18.6)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1)))(react-dom@19.1.1(react@19.2.7))(react@19.2.7)(svelte@5.56.3(@typescript-eslint/types@8.44.1))
+        version: 1.6.16(@cloudflare/workers-types@4.20250927.0)(@sveltejs/kit@2.64.0(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.56.3(@typescript-eslint/types@8.44.1))(vite@8.0.16(@types/node@24.13.2)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1)))(svelte@5.56.3(@typescript-eslint/types@8.44.1))(typescript@5.9.2)(vite@8.0.16(@types/node@24.13.2)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1)))(react-dom@19.1.1(react@19.2.7))(react@19.2.7)(svelte@5.56.3(@typescript-eslint/types@8.44.1))
       convex:
         specifier: ^1.41.0
         version: 1.41.0(react@19.2.7)
@@ -53,16 +53,16 @@ importers:
         version: 1.55.1
       '@sveltejs/adapter-cloudflare':
         specifier: ^7.0.0
-        version: 7.2.3(@sveltejs/kit@2.64.0(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.56.3(@typescript-eslint/types@8.44.1))(vite@8.0.16(@types/node@22.18.6)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1)))(svelte@5.56.3(@typescript-eslint/types@8.44.1))(typescript@5.9.2)(vite@8.0.16(@types/node@22.18.6)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1)))(wrangler@4.40.2(@cloudflare/workers-types@4.20250927.0))
+        version: 7.2.3(@sveltejs/kit@2.64.0(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.56.3(@typescript-eslint/types@8.44.1))(vite@8.0.16(@types/node@24.13.2)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1)))(svelte@5.56.3(@typescript-eslint/types@8.44.1))(typescript@5.9.2)(vite@8.0.16(@types/node@24.13.2)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1)))(wrangler@4.40.2(@cloudflare/workers-types@4.20250927.0))
       '@sveltejs/kit':
         specifier: ^2.64.0
-        version: 2.64.0(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.56.3(@typescript-eslint/types@8.44.1))(vite@8.0.16(@types/node@22.18.6)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1)))(svelte@5.56.3(@typescript-eslint/types@8.44.1))(typescript@5.9.2)(vite@8.0.16(@types/node@22.18.6)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1))
+        version: 2.64.0(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.56.3(@typescript-eslint/types@8.44.1))(vite@8.0.16(@types/node@24.13.2)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1)))(svelte@5.56.3(@typescript-eslint/types@8.44.1))(typescript@5.9.2)(vite@8.0.16(@types/node@24.13.2)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1))
       '@sveltejs/vite-plugin-svelte':
         specifier: ^7.1.2
-        version: 7.1.2(svelte@5.56.3(@typescript-eslint/types@8.44.1))(vite@8.0.16(@types/node@22.18.6)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1))
+        version: 7.1.2(svelte@5.56.3(@typescript-eslint/types@8.44.1))(vite@8.0.16(@types/node@24.13.2)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1))
       '@tailwindcss/vite':
         specifier: ^4.3.0
-        version: 4.3.0(vite@8.0.16(@types/node@22.18.6)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1))
+        version: 4.3.0(vite@8.0.16(@types/node@24.13.2)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1))
       '@tanstack/table-core':
         specifier: ^8.21.3
         version: 8.21.3
@@ -73,11 +73,11 @@ importers:
         specifier: ^3.1.7
         version: 3.1.7
       '@types/node':
-        specifier: ^22
-        version: 22.18.6
+        specifier: ^24.13.2
+        version: 24.13.2
       atmn:
         specifier: ^1.1.8
-        version: 1.1.8(@types/node@22.18.6)(typescript@5.9.2)
+        version: 1.1.8(@types/node@24.13.2)(typescript@5.9.2)
       bits-ui:
         specifier: ^2.11.4
         version: 2.11.4(@internationalized/date@3.9.0)(svelte@5.56.3(@typescript-eslint/types@8.44.1))
@@ -125,7 +125,7 @@ importers:
         version: 0.6.14(prettier-plugin-svelte@3.4.0(prettier@3.6.2)(svelte@5.56.3(@typescript-eslint/types@8.44.1)))(prettier@3.6.2)
       runed:
         specifier: ^0.37.1
-        version: 0.37.1(@sveltejs/kit@2.64.0(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.56.3(@typescript-eslint/types@8.44.1))(vite@8.0.16(@types/node@22.18.6)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1)))(svelte@5.56.3(@typescript-eslint/types@8.44.1))(typescript@5.9.2)(vite@8.0.16(@types/node@22.18.6)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1)))(svelte@5.56.3(@typescript-eslint/types@8.44.1))(zod@4.4.3)
+        version: 0.37.1(@sveltejs/kit@2.64.0(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.56.3(@typescript-eslint/types@8.44.1))(vite@8.0.16(@types/node@24.13.2)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1)))(svelte@5.56.3(@typescript-eslint/types@8.44.1))(typescript@5.9.2)(vite@8.0.16(@types/node@24.13.2)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1)))(svelte@5.56.3(@typescript-eslint/types@8.44.1))(zod@4.4.3)
       svelte:
         specifier: ^5.56.3
         version: 5.56.3(@typescript-eslint/types@8.44.1)
@@ -158,7 +158,7 @@ importers:
         version: 1.0.0-next.7(svelte@5.56.3(@typescript-eslint/types@8.44.1))
       vite:
         specifier: ^8.0.16
-        version: 8.0.16(@types/node@22.18.6)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1)
+        version: 8.0.16(@types/node@24.13.2)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1)
       zod:
         specifier: ^4.4.3
         version: 4.4.3
@@ -1375,8 +1375,8 @@ packages:
   '@types/json-schema@7.0.15':
     resolution: {integrity: sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA==}
 
-  '@types/node@22.18.6':
-    resolution: {integrity: sha512-r8uszLPpeIWbNKtvWRt/DbVi5zbqZyj1PTmhRMqBMvDnaz1QpmSKujUtJLrqGZeoM8v72MfYggDceY4K1itzWQ==}
+  '@types/node@24.13.2':
+    resolution: {integrity: sha512-fRa09kZTgu8o71KFcDjUFuc7F+dEbZYZmkI0mg5YBTRs0yMKjYHsq/c0urDKeDb+D5qVgXOdFcuu+DZPKOITwA==}
 
   '@types/prettier@3.0.0':
     resolution: {integrity: sha512-mFMBfMOz8QxhYVbuINtswBp9VL2b4Y0QqYHwqLz3YbgtfAcat2Dl6Y1o4e22S/OVE6Ebl9m7wWiMT2lSbAs1wA==}
@@ -3487,8 +3487,8 @@ packages:
     resolution: {integrity: sha512-rvKSBiC5zqCCiDZ9kAOszZcDvdAHwwIKJG33Ykj43OKcWsnmcBRL09YTU4nOeHZ8Y2a7l1MgTd08SBe9A8Qj6A==}
     engines: {node: '>=18'}
 
-  undici-types@6.21.0:
-    resolution: {integrity: sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ==}
+  undici-types@7.18.2:
+    resolution: {integrity: sha512-AsuCzffGHJybSaRrmr5eHr81mwJU3kjw6M+uprWvCXiNeN9SOGwQ3Jn8jb8m3Z6izVgknn1R0FTCEAP2QrLY/w==}
 
   undici@7.14.0:
     resolution: {integrity: sha512-Vqs8HTzjpQXZeXdpsfChQTlafcMQaaIwnGwLam1wudSSjlJeQ3bw1j+TLPePgrCnCpUXx7Ba5Pdpf5OBih62NQ==}
@@ -3792,10 +3792,10 @@ snapshots:
 
   '@cloudflare/workers-types@4.20250927.0': {}
 
-  '@convex-dev/better-auth@0.12.2(@standard-schema/spec@1.1.0)(better-auth@1.6.16(@cloudflare/workers-types@4.20250927.0)(@sveltejs/kit@2.64.0(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.56.3(@typescript-eslint/types@8.44.1))(vite@8.0.16(@types/node@22.18.6)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1)))(svelte@5.56.3(@typescript-eslint/types@8.44.1))(typescript@5.9.2)(vite@8.0.16(@types/node@22.18.6)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1)))(react-dom@19.1.1(react@19.2.7))(react@19.2.7)(svelte@5.56.3(@typescript-eslint/types@8.44.1)))(convex@1.41.0(react@19.2.7))(react@19.2.7)(typescript@5.9.2)':
+  '@convex-dev/better-auth@0.12.2(@standard-schema/spec@1.1.0)(better-auth@1.6.16(@cloudflare/workers-types@4.20250927.0)(@sveltejs/kit@2.64.0(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.56.3(@typescript-eslint/types@8.44.1))(vite@8.0.16(@types/node@24.13.2)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1)))(svelte@5.56.3(@typescript-eslint/types@8.44.1))(typescript@5.9.2)(vite@8.0.16(@types/node@24.13.2)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1)))(react-dom@19.1.1(react@19.2.7))(react@19.2.7)(svelte@5.56.3(@typescript-eslint/types@8.44.1)))(convex@1.41.0(react@19.2.7))(react@19.2.7)(typescript@5.9.2)':
     dependencies:
       '@better-fetch/fetch': 1.1.18
-      better-auth: 1.6.16(@cloudflare/workers-types@4.20250927.0)(@sveltejs/kit@2.64.0(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.56.3(@typescript-eslint/types@8.44.1))(vite@8.0.16(@types/node@22.18.6)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1)))(svelte@5.56.3(@typescript-eslint/types@8.44.1))(typescript@5.9.2)(vite@8.0.16(@types/node@22.18.6)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1)))(react-dom@19.1.1(react@19.2.7))(react@19.2.7)(svelte@5.56.3(@typescript-eslint/types@8.44.1))
+      better-auth: 1.6.16(@cloudflare/workers-types@4.20250927.0)(@sveltejs/kit@2.64.0(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.56.3(@typescript-eslint/types@8.44.1))(vite@8.0.16(@types/node@24.13.2)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1)))(svelte@5.56.3(@typescript-eslint/types@8.44.1))(typescript@5.9.2)(vite@8.0.16(@types/node@24.13.2)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1)))(react-dom@19.1.1(react@19.2.7))(react@19.2.7)(svelte@5.56.3(@typescript-eslint/types@8.44.1))
       common-tags: 1.8.2
       convex: 1.41.0(react@19.2.7)
       convex-helpers: 0.1.104(@standard-schema/spec@1.1.0)(convex@1.41.0(react@19.2.7))(react@19.2.7)(typescript@5.9.2)(zod@4.4.3)
@@ -4190,128 +4190,128 @@ snapshots:
 
   '@inquirer/ansi@1.0.2': {}
 
-  '@inquirer/checkbox@4.3.2(@types/node@22.18.6)':
+  '@inquirer/checkbox@4.3.2(@types/node@24.13.2)':
     dependencies:
       '@inquirer/ansi': 1.0.2
-      '@inquirer/core': 10.3.2(@types/node@22.18.6)
+      '@inquirer/core': 10.3.2(@types/node@24.13.2)
       '@inquirer/figures': 1.0.15
-      '@inquirer/type': 3.0.10(@types/node@22.18.6)
+      '@inquirer/type': 3.0.10(@types/node@24.13.2)
       yoctocolors-cjs: 2.1.3
     optionalDependencies:
-      '@types/node': 22.18.6
+      '@types/node': 24.13.2
 
-  '@inquirer/confirm@5.1.21(@types/node@22.18.6)':
+  '@inquirer/confirm@5.1.21(@types/node@24.13.2)':
     dependencies:
-      '@inquirer/core': 10.3.2(@types/node@22.18.6)
-      '@inquirer/type': 3.0.10(@types/node@22.18.6)
+      '@inquirer/core': 10.3.2(@types/node@24.13.2)
+      '@inquirer/type': 3.0.10(@types/node@24.13.2)
     optionalDependencies:
-      '@types/node': 22.18.6
+      '@types/node': 24.13.2
 
-  '@inquirer/core@10.3.2(@types/node@22.18.6)':
+  '@inquirer/core@10.3.2(@types/node@24.13.2)':
     dependencies:
       '@inquirer/ansi': 1.0.2
       '@inquirer/figures': 1.0.15
-      '@inquirer/type': 3.0.10(@types/node@22.18.6)
+      '@inquirer/type': 3.0.10(@types/node@24.13.2)
       cli-width: 4.1.0
       mute-stream: 2.0.0
       signal-exit: 4.1.0
       wrap-ansi: 6.2.0
       yoctocolors-cjs: 2.1.3
     optionalDependencies:
-      '@types/node': 22.18.6
+      '@types/node': 24.13.2
 
-  '@inquirer/editor@4.2.23(@types/node@22.18.6)':
+  '@inquirer/editor@4.2.23(@types/node@24.13.2)':
     dependencies:
-      '@inquirer/core': 10.3.2(@types/node@22.18.6)
-      '@inquirer/external-editor': 1.0.3(@types/node@22.18.6)
-      '@inquirer/type': 3.0.10(@types/node@22.18.6)
+      '@inquirer/core': 10.3.2(@types/node@24.13.2)
+      '@inquirer/external-editor': 1.0.3(@types/node@24.13.2)
+      '@inquirer/type': 3.0.10(@types/node@24.13.2)
     optionalDependencies:
-      '@types/node': 22.18.6
+      '@types/node': 24.13.2
 
-  '@inquirer/expand@4.0.23(@types/node@22.18.6)':
+  '@inquirer/expand@4.0.23(@types/node@24.13.2)':
     dependencies:
-      '@inquirer/core': 10.3.2(@types/node@22.18.6)
-      '@inquirer/type': 3.0.10(@types/node@22.18.6)
+      '@inquirer/core': 10.3.2(@types/node@24.13.2)
+      '@inquirer/type': 3.0.10(@types/node@24.13.2)
       yoctocolors-cjs: 2.1.3
     optionalDependencies:
-      '@types/node': 22.18.6
+      '@types/node': 24.13.2
 
-  '@inquirer/external-editor@1.0.3(@types/node@22.18.6)':
+  '@inquirer/external-editor@1.0.3(@types/node@24.13.2)':
     dependencies:
       chardet: 2.1.1
       iconv-lite: 0.7.2
     optionalDependencies:
-      '@types/node': 22.18.6
+      '@types/node': 24.13.2
 
   '@inquirer/figures@1.0.15': {}
 
-  '@inquirer/input@4.3.1(@types/node@22.18.6)':
+  '@inquirer/input@4.3.1(@types/node@24.13.2)':
     dependencies:
-      '@inquirer/core': 10.3.2(@types/node@22.18.6)
-      '@inquirer/type': 3.0.10(@types/node@22.18.6)
+      '@inquirer/core': 10.3.2(@types/node@24.13.2)
+      '@inquirer/type': 3.0.10(@types/node@24.13.2)
     optionalDependencies:
-      '@types/node': 22.18.6
+      '@types/node': 24.13.2
 
-  '@inquirer/number@3.0.23(@types/node@22.18.6)':
+  '@inquirer/number@3.0.23(@types/node@24.13.2)':
     dependencies:
-      '@inquirer/core': 10.3.2(@types/node@22.18.6)
-      '@inquirer/type': 3.0.10(@types/node@22.18.6)
+      '@inquirer/core': 10.3.2(@types/node@24.13.2)
+      '@inquirer/type': 3.0.10(@types/node@24.13.2)
     optionalDependencies:
-      '@types/node': 22.18.6
+      '@types/node': 24.13.2
 
-  '@inquirer/password@4.0.23(@types/node@22.18.6)':
-    dependencies:
-      '@inquirer/ansi': 1.0.2
-      '@inquirer/core': 10.3.2(@types/node@22.18.6)
-      '@inquirer/type': 3.0.10(@types/node@22.18.6)
-    optionalDependencies:
-      '@types/node': 22.18.6
-
-  '@inquirer/prompts@7.10.1(@types/node@22.18.6)':
-    dependencies:
-      '@inquirer/checkbox': 4.3.2(@types/node@22.18.6)
-      '@inquirer/confirm': 5.1.21(@types/node@22.18.6)
-      '@inquirer/editor': 4.2.23(@types/node@22.18.6)
-      '@inquirer/expand': 4.0.23(@types/node@22.18.6)
-      '@inquirer/input': 4.3.1(@types/node@22.18.6)
-      '@inquirer/number': 3.0.23(@types/node@22.18.6)
-      '@inquirer/password': 4.0.23(@types/node@22.18.6)
-      '@inquirer/rawlist': 4.1.11(@types/node@22.18.6)
-      '@inquirer/search': 3.2.2(@types/node@22.18.6)
-      '@inquirer/select': 4.4.2(@types/node@22.18.6)
-    optionalDependencies:
-      '@types/node': 22.18.6
-
-  '@inquirer/rawlist@4.1.11(@types/node@22.18.6)':
-    dependencies:
-      '@inquirer/core': 10.3.2(@types/node@22.18.6)
-      '@inquirer/type': 3.0.10(@types/node@22.18.6)
-      yoctocolors-cjs: 2.1.3
-    optionalDependencies:
-      '@types/node': 22.18.6
-
-  '@inquirer/search@3.2.2(@types/node@22.18.6)':
-    dependencies:
-      '@inquirer/core': 10.3.2(@types/node@22.18.6)
-      '@inquirer/figures': 1.0.15
-      '@inquirer/type': 3.0.10(@types/node@22.18.6)
-      yoctocolors-cjs: 2.1.3
-    optionalDependencies:
-      '@types/node': 22.18.6
-
-  '@inquirer/select@4.4.2(@types/node@22.18.6)':
+  '@inquirer/password@4.0.23(@types/node@24.13.2)':
     dependencies:
       '@inquirer/ansi': 1.0.2
-      '@inquirer/core': 10.3.2(@types/node@22.18.6)
-      '@inquirer/figures': 1.0.15
-      '@inquirer/type': 3.0.10(@types/node@22.18.6)
+      '@inquirer/core': 10.3.2(@types/node@24.13.2)
+      '@inquirer/type': 3.0.10(@types/node@24.13.2)
+    optionalDependencies:
+      '@types/node': 24.13.2
+
+  '@inquirer/prompts@7.10.1(@types/node@24.13.2)':
+    dependencies:
+      '@inquirer/checkbox': 4.3.2(@types/node@24.13.2)
+      '@inquirer/confirm': 5.1.21(@types/node@24.13.2)
+      '@inquirer/editor': 4.2.23(@types/node@24.13.2)
+      '@inquirer/expand': 4.0.23(@types/node@24.13.2)
+      '@inquirer/input': 4.3.1(@types/node@24.13.2)
+      '@inquirer/number': 3.0.23(@types/node@24.13.2)
+      '@inquirer/password': 4.0.23(@types/node@24.13.2)
+      '@inquirer/rawlist': 4.1.11(@types/node@24.13.2)
+      '@inquirer/search': 3.2.2(@types/node@24.13.2)
+      '@inquirer/select': 4.4.2(@types/node@24.13.2)
+    optionalDependencies:
+      '@types/node': 24.13.2
+
+  '@inquirer/rawlist@4.1.11(@types/node@24.13.2)':
+    dependencies:
+      '@inquirer/core': 10.3.2(@types/node@24.13.2)
+      '@inquirer/type': 3.0.10(@types/node@24.13.2)
       yoctocolors-cjs: 2.1.3
     optionalDependencies:
-      '@types/node': 22.18.6
+      '@types/node': 24.13.2
 
-  '@inquirer/type@3.0.10(@types/node@22.18.6)':
+  '@inquirer/search@3.2.2(@types/node@24.13.2)':
+    dependencies:
+      '@inquirer/core': 10.3.2(@types/node@24.13.2)
+      '@inquirer/figures': 1.0.15
+      '@inquirer/type': 3.0.10(@types/node@24.13.2)
+      yoctocolors-cjs: 2.1.3
     optionalDependencies:
-      '@types/node': 22.18.6
+      '@types/node': 24.13.2
+
+  '@inquirer/select@4.4.2(@types/node@24.13.2)':
+    dependencies:
+      '@inquirer/ansi': 1.0.2
+      '@inquirer/core': 10.3.2(@types/node@24.13.2)
+      '@inquirer/figures': 1.0.15
+      '@inquirer/type': 3.0.10(@types/node@24.13.2)
+      yoctocolors-cjs: 2.1.3
+    optionalDependencies:
+      '@types/node': 24.13.2
+
+  '@inquirer/type@3.0.10(@types/node@24.13.2)':
+    optionalDependencies:
+      '@types/node': 24.13.2
 
   '@internationalized/date@3.9.0':
     dependencies:
@@ -4376,20 +4376,20 @@ snapshots:
       react: 19.2.7
       typescript: 5.9.2
 
-  '@mmailaender/convex-better-auth-svelte@0.7.4(0c88fd5c717764bff7418892ffc86fe0)':
+  '@mmailaender/convex-better-auth-svelte@0.7.4(a619b8e5c1f39e9e65538563f875cf52)':
     dependencies:
-      '@convex-dev/better-auth': 0.12.2(@standard-schema/spec@1.1.0)(better-auth@1.6.16(@cloudflare/workers-types@4.20250927.0)(@sveltejs/kit@2.64.0(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.56.3(@typescript-eslint/types@8.44.1))(vite@8.0.16(@types/node@22.18.6)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1)))(svelte@5.56.3(@typescript-eslint/types@8.44.1))(typescript@5.9.2)(vite@8.0.16(@types/node@22.18.6)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1)))(react-dom@19.1.1(react@19.2.7))(react@19.2.7)(svelte@5.56.3(@typescript-eslint/types@8.44.1)))(convex@1.41.0(react@19.2.7))(react@19.2.7)(typescript@5.9.2)
-      '@mmailaender/convex-svelte': 0.19.0(@sveltejs/kit@2.64.0(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.56.3(@typescript-eslint/types@8.44.1))(vite@8.0.16(@types/node@22.18.6)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1)))(svelte@5.56.3(@typescript-eslint/types@8.44.1))(typescript@5.9.2)(vite@8.0.16(@types/node@22.18.6)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1)))(convex@1.41.0(react@19.2.7))(svelte@5.56.3(@typescript-eslint/types@8.44.1))(zod@4.4.3)
-      better-auth: 1.6.16(@cloudflare/workers-types@4.20250927.0)(@sveltejs/kit@2.64.0(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.56.3(@typescript-eslint/types@8.44.1))(vite@8.0.16(@types/node@22.18.6)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1)))(svelte@5.56.3(@typescript-eslint/types@8.44.1))(typescript@5.9.2)(vite@8.0.16(@types/node@22.18.6)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1)))(react-dom@19.1.1(react@19.2.7))(react@19.2.7)(svelte@5.56.3(@typescript-eslint/types@8.44.1))
+      '@convex-dev/better-auth': 0.12.2(@standard-schema/spec@1.1.0)(better-auth@1.6.16(@cloudflare/workers-types@4.20250927.0)(@sveltejs/kit@2.64.0(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.56.3(@typescript-eslint/types@8.44.1))(vite@8.0.16(@types/node@24.13.2)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1)))(svelte@5.56.3(@typescript-eslint/types@8.44.1))(typescript@5.9.2)(vite@8.0.16(@types/node@24.13.2)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1)))(react-dom@19.1.1(react@19.2.7))(react@19.2.7)(svelte@5.56.3(@typescript-eslint/types@8.44.1)))(convex@1.41.0(react@19.2.7))(react@19.2.7)(typescript@5.9.2)
+      '@mmailaender/convex-svelte': 0.19.0(@sveltejs/kit@2.64.0(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.56.3(@typescript-eslint/types@8.44.1))(vite@8.0.16(@types/node@24.13.2)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1)))(svelte@5.56.3(@typescript-eslint/types@8.44.1))(typescript@5.9.2)(vite@8.0.16(@types/node@24.13.2)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1)))(convex@1.41.0(react@19.2.7))(svelte@5.56.3(@typescript-eslint/types@8.44.1))(zod@4.4.3)
+      better-auth: 1.6.16(@cloudflare/workers-types@4.20250927.0)(@sveltejs/kit@2.64.0(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.56.3(@typescript-eslint/types@8.44.1))(vite@8.0.16(@types/node@24.13.2)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1)))(svelte@5.56.3(@typescript-eslint/types@8.44.1))(typescript@5.9.2)(vite@8.0.16(@types/node@24.13.2)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1)))(react-dom@19.1.1(react@19.2.7))(react@19.2.7)(svelte@5.56.3(@typescript-eslint/types@8.44.1))
       convex: 1.41.0(react@19.2.7)
       is-network-error: 1.3.0
       svelte: 5.56.3(@typescript-eslint/types@8.44.1)
 
-  '@mmailaender/convex-svelte@0.19.0(@sveltejs/kit@2.64.0(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.56.3(@typescript-eslint/types@8.44.1))(vite@8.0.16(@types/node@22.18.6)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1)))(svelte@5.56.3(@typescript-eslint/types@8.44.1))(typescript@5.9.2)(vite@8.0.16(@types/node@22.18.6)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1)))(convex@1.41.0(react@19.2.7))(svelte@5.56.3(@typescript-eslint/types@8.44.1))(zod@4.4.3)':
+  '@mmailaender/convex-svelte@0.19.0(@sveltejs/kit@2.64.0(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.56.3(@typescript-eslint/types@8.44.1))(vite@8.0.16(@types/node@24.13.2)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1)))(svelte@5.56.3(@typescript-eslint/types@8.44.1))(typescript@5.9.2)(vite@8.0.16(@types/node@24.13.2)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1)))(convex@1.41.0(react@19.2.7))(svelte@5.56.3(@typescript-eslint/types@8.44.1))(zod@4.4.3)':
     dependencies:
       convex: 1.41.0(react@19.2.7)
       esm-env: 1.2.2
-      runed: 0.37.1(@sveltejs/kit@2.64.0(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.56.3(@typescript-eslint/types@8.44.1))(vite@8.0.16(@types/node@22.18.6)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1)))(svelte@5.56.3(@typescript-eslint/types@8.44.1))(typescript@5.9.2)(vite@8.0.16(@types/node@22.18.6)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1)))(svelte@5.56.3(@typescript-eslint/types@8.44.1))(zod@4.4.3)
+      runed: 0.37.1(@sveltejs/kit@2.64.0(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.56.3(@typescript-eslint/types@8.44.1))(vite@8.0.16(@types/node@24.13.2)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1)))(svelte@5.56.3(@typescript-eslint/types@8.44.1))(typescript@5.9.2)(vite@8.0.16(@types/node@24.13.2)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1)))(svelte@5.56.3(@typescript-eslint/types@8.44.1))(zod@4.4.3)
       svelte: 5.56.3(@typescript-eslint/types@8.44.1)
     transitivePeerDependencies:
       - '@sveltejs/kit'
@@ -4530,18 +4530,18 @@ snapshots:
     dependencies:
       acorn: 8.16.0
 
-  '@sveltejs/adapter-cloudflare@7.2.3(@sveltejs/kit@2.64.0(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.56.3(@typescript-eslint/types@8.44.1))(vite@8.0.16(@types/node@22.18.6)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1)))(svelte@5.56.3(@typescript-eslint/types@8.44.1))(typescript@5.9.2)(vite@8.0.16(@types/node@22.18.6)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1)))(wrangler@4.40.2(@cloudflare/workers-types@4.20250927.0))':
+  '@sveltejs/adapter-cloudflare@7.2.3(@sveltejs/kit@2.64.0(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.56.3(@typescript-eslint/types@8.44.1))(vite@8.0.16(@types/node@24.13.2)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1)))(svelte@5.56.3(@typescript-eslint/types@8.44.1))(typescript@5.9.2)(vite@8.0.16(@types/node@24.13.2)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1)))(wrangler@4.40.2(@cloudflare/workers-types@4.20250927.0))':
     dependencies:
       '@cloudflare/workers-types': 4.20250927.0
-      '@sveltejs/kit': 2.64.0(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.56.3(@typescript-eslint/types@8.44.1))(vite@8.0.16(@types/node@22.18.6)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1)))(svelte@5.56.3(@typescript-eslint/types@8.44.1))(typescript@5.9.2)(vite@8.0.16(@types/node@22.18.6)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1))
+      '@sveltejs/kit': 2.64.0(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.56.3(@typescript-eslint/types@8.44.1))(vite@8.0.16(@types/node@24.13.2)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1)))(svelte@5.56.3(@typescript-eslint/types@8.44.1))(typescript@5.9.2)(vite@8.0.16(@types/node@24.13.2)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1))
       worktop: 0.8.0-next.18
       wrangler: 4.40.2(@cloudflare/workers-types@4.20250927.0)
 
-  '@sveltejs/kit@2.64.0(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.56.3(@typescript-eslint/types@8.44.1))(vite@8.0.16(@types/node@22.18.6)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1)))(svelte@5.56.3(@typescript-eslint/types@8.44.1))(typescript@5.9.2)(vite@8.0.16(@types/node@22.18.6)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1))':
+  '@sveltejs/kit@2.64.0(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.56.3(@typescript-eslint/types@8.44.1))(vite@8.0.16(@types/node@24.13.2)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1)))(svelte@5.56.3(@typescript-eslint/types@8.44.1))(typescript@5.9.2)(vite@8.0.16(@types/node@24.13.2)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1))':
     dependencies:
       '@standard-schema/spec': 1.1.0
       '@sveltejs/acorn-typescript': 1.0.10(acorn@8.16.0)
-      '@sveltejs/vite-plugin-svelte': 7.1.2(svelte@5.56.3(@typescript-eslint/types@8.44.1))(vite@8.0.16(@types/node@22.18.6)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1))
+      '@sveltejs/vite-plugin-svelte': 7.1.2(svelte@5.56.3(@typescript-eslint/types@8.44.1))(vite@8.0.16(@types/node@24.13.2)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1))
       '@types/cookie': 0.6.0
       acorn: 8.16.0
       cookie: 0.6.0
@@ -4553,18 +4553,18 @@ snapshots:
       set-cookie-parser: 3.1.0
       sirv: 3.0.2
       svelte: 5.56.3(@typescript-eslint/types@8.44.1)
-      vite: 8.0.16(@types/node@22.18.6)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1)
+      vite: 8.0.16(@types/node@24.13.2)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1)
     optionalDependencies:
       typescript: 5.9.2
 
-  '@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.56.3(@typescript-eslint/types@8.44.1))(vite@8.0.16(@types/node@22.18.6)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1))':
+  '@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.56.3(@typescript-eslint/types@8.44.1))(vite@8.0.16(@types/node@24.13.2)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1))':
     dependencies:
       deepmerge: 4.3.1
       magic-string: 0.30.21
       obug: 2.1.2
       svelte: 5.56.3(@typescript-eslint/types@8.44.1)
-      vite: 8.0.16(@types/node@22.18.6)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1)
-      vitefu: 1.1.3(vite@8.0.16(@types/node@22.18.6)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1))
+      vite: 8.0.16(@types/node@24.13.2)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1)
+      vitefu: 1.1.3(vite@8.0.16(@types/node@24.13.2)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1))
 
   '@swc/helpers@0.5.17':
     dependencies:
@@ -4631,12 +4631,12 @@ snapshots:
       '@tailwindcss/oxide-win32-arm64-msvc': 4.3.0
       '@tailwindcss/oxide-win32-x64-msvc': 4.3.0
 
-  '@tailwindcss/vite@4.3.0(vite@8.0.16(@types/node@22.18.6)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1))':
+  '@tailwindcss/vite@4.3.0(vite@8.0.16(@types/node@24.13.2)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1))':
     dependencies:
       '@tailwindcss/node': 4.3.0
       '@tailwindcss/oxide': 4.3.0
       tailwindcss: 4.3.0
-      vite: 8.0.16(@types/node@22.18.6)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1)
+      vite: 8.0.16(@types/node@24.13.2)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1)
 
   '@tanstack/query-core@5.101.0': {}
 
@@ -4670,9 +4670,9 @@ snapshots:
 
   '@types/json-schema@7.0.15': {}
 
-  '@types/node@22.18.6':
+  '@types/node@24.13.2':
     dependencies:
-      undici-types: 6.21.0
+      undici-types: 7.18.2
 
   '@types/prettier@3.0.0':
     dependencies:
@@ -4835,9 +4835,9 @@ snapshots:
 
   asynckit@0.4.0: {}
 
-  atmn@1.1.8(@types/node@22.18.6)(typescript@5.9.2):
+  atmn@1.1.8(@types/node@24.13.2)(typescript@5.9.2):
     dependencies:
-      '@inquirer/prompts': 7.10.1(@types/node@22.18.6)
+      '@inquirer/prompts': 7.10.1(@types/node@24.13.2)
       '@mishieck/ink-titled-box': 0.3.0(ink@6.8.0(react@19.2.7))(react@19.2.7)(typescript@5.9.2)
       '@tanstack/react-query': 5.101.0(react@19.2.7)
       '@types/prettier': 3.0.0
@@ -4860,7 +4860,7 @@ snapshots:
       ink-spinner: 5.0.0(ink@6.8.0(react@19.2.7))(react@19.2.7)
       ink-table: 3.1.0(ink@6.8.0(react@19.2.7))(react@19.2.7)
       ink-text-input: 6.0.0(ink@6.8.0(react@19.2.7))(react@19.2.7)
-      inquirer: 12.11.1(@types/node@22.18.6)
+      inquirer: 12.11.1(@types/node@24.13.2)
       jiti: 2.7.0
       open: 10.2.0
       prettier: 3.6.2
@@ -4884,13 +4884,13 @@ snapshots:
 
   auto-bind@5.0.1: {}
 
-  autumn-js@1.2.28(better-auth@1.6.16(@cloudflare/workers-types@4.20250927.0)(@sveltejs/kit@2.64.0(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.56.3(@typescript-eslint/types@8.44.1))(vite@8.0.16(@types/node@22.18.6)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1)))(svelte@5.56.3(@typescript-eslint/types@8.44.1))(typescript@5.9.2)(vite@8.0.16(@types/node@22.18.6)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1)))(react-dom@19.1.1(react@19.2.7))(react@19.2.7)(svelte@5.56.3(@typescript-eslint/types@8.44.1)))(better-call@1.3.6(zod@4.4.3))(react@19.2.7):
+  autumn-js@1.2.28(better-auth@1.6.16(@cloudflare/workers-types@4.20250927.0)(@sveltejs/kit@2.64.0(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.56.3(@typescript-eslint/types@8.44.1))(vite@8.0.16(@types/node@24.13.2)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1)))(svelte@5.56.3(@typescript-eslint/types@8.44.1))(typescript@5.9.2)(vite@8.0.16(@types/node@24.13.2)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1)))(react-dom@19.1.1(react@19.2.7))(react@19.2.7)(svelte@5.56.3(@typescript-eslint/types@8.44.1)))(better-call@1.3.6(zod@4.4.3))(react@19.2.7):
     dependencies:
       query-string: 9.4.0
       rou3: 0.6.3
       zod: 4.4.3
     optionalDependencies:
-      better-auth: 1.6.16(@cloudflare/workers-types@4.20250927.0)(@sveltejs/kit@2.64.0(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.56.3(@typescript-eslint/types@8.44.1))(vite@8.0.16(@types/node@22.18.6)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1)))(svelte@5.56.3(@typescript-eslint/types@8.44.1))(typescript@5.9.2)(vite@8.0.16(@types/node@22.18.6)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1)))(react-dom@19.1.1(react@19.2.7))(react@19.2.7)(svelte@5.56.3(@typescript-eslint/types@8.44.1))
+      better-auth: 1.6.16(@cloudflare/workers-types@4.20250927.0)(@sveltejs/kit@2.64.0(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.56.3(@typescript-eslint/types@8.44.1))(vite@8.0.16(@types/node@24.13.2)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1)))(svelte@5.56.3(@typescript-eslint/types@8.44.1))(typescript@5.9.2)(vite@8.0.16(@types/node@24.13.2)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1)))(react-dom@19.1.1(react@19.2.7))(react@19.2.7)(svelte@5.56.3(@typescript-eslint/types@8.44.1))
       better-call: 1.3.6(zod@4.4.3)
       react: 19.2.7
 
@@ -4908,7 +4908,7 @@ snapshots:
 
   balanced-match@1.0.2: {}
 
-  better-auth@1.6.16(@cloudflare/workers-types@4.20250927.0)(@sveltejs/kit@2.64.0(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.56.3(@typescript-eslint/types@8.44.1))(vite@8.0.16(@types/node@22.18.6)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1)))(svelte@5.56.3(@typescript-eslint/types@8.44.1))(typescript@5.9.2)(vite@8.0.16(@types/node@22.18.6)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1)))(react-dom@19.1.1(react@19.2.7))(react@19.2.7)(svelte@5.56.3(@typescript-eslint/types@8.44.1)):
+  better-auth@1.6.16(@cloudflare/workers-types@4.20250927.0)(@sveltejs/kit@2.64.0(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.56.3(@typescript-eslint/types@8.44.1))(vite@8.0.16(@types/node@24.13.2)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1)))(svelte@5.56.3(@typescript-eslint/types@8.44.1))(typescript@5.9.2)(vite@8.0.16(@types/node@24.13.2)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1)))(react-dom@19.1.1(react@19.2.7))(react@19.2.7)(svelte@5.56.3(@typescript-eslint/types@8.44.1)):
     dependencies:
       '@better-auth/core': 1.6.16(@better-auth/utils@0.4.1)(@better-fetch/fetch@1.2.2)(@cloudflare/workers-types@4.20250927.0)(better-call@1.3.6(zod@4.4.3))(jose@6.2.3)(kysely@0.29.2)(nanostores@1.3.0)
       '@better-auth/drizzle-adapter': 1.6.16(@better-auth/core@1.6.16(@better-auth/utils@0.4.1)(@better-fetch/fetch@1.2.2)(@cloudflare/workers-types@4.20250927.0)(better-call@1.3.6(zod@4.4.3))(jose@6.2.3)(kysely@0.29.2)(nanostores@1.3.0))(@better-auth/utils@0.4.1)
@@ -4928,7 +4928,7 @@ snapshots:
       nanostores: 1.3.0
       zod: 4.4.3
     optionalDependencies:
-      '@sveltejs/kit': 2.64.0(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.56.3(@typescript-eslint/types@8.44.1))(vite@8.0.16(@types/node@22.18.6)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1)))(svelte@5.56.3(@typescript-eslint/types@8.44.1))(typescript@5.9.2)(vite@8.0.16(@types/node@22.18.6)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1))
+      '@sveltejs/kit': 2.64.0(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.56.3(@typescript-eslint/types@8.44.1))(vite@8.0.16(@types/node@24.13.2)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1)))(svelte@5.56.3(@typescript-eslint/types@8.44.1))(typescript@5.9.2)(vite@8.0.16(@types/node@24.13.2)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1))
       react: 19.2.7
       react-dom: 19.1.1(react@19.2.7)
       svelte: 5.56.3(@typescript-eslint/types@8.44.1)
@@ -5777,17 +5777,17 @@ snapshots:
 
   inline-style-parser@0.2.4: {}
 
-  inquirer@12.11.1(@types/node@22.18.6):
+  inquirer@12.11.1(@types/node@24.13.2):
     dependencies:
       '@inquirer/ansi': 1.0.2
-      '@inquirer/core': 10.3.2(@types/node@22.18.6)
-      '@inquirer/prompts': 7.10.1(@types/node@22.18.6)
-      '@inquirer/type': 3.0.10(@types/node@22.18.6)
+      '@inquirer/core': 10.3.2(@types/node@24.13.2)
+      '@inquirer/prompts': 7.10.1(@types/node@24.13.2)
+      '@inquirer/type': 3.0.10(@types/node@24.13.2)
       mute-stream: 2.0.0
       run-async: 4.0.6
       rxjs: 7.8.2
     optionalDependencies:
-      '@types/node': 22.18.6
+      '@types/node': 24.13.2
 
   internmap@1.0.1: {}
 
@@ -6379,14 +6379,14 @@ snapshots:
       esm-env: 1.2.2
       svelte: 5.56.3(@typescript-eslint/types@8.44.1)
 
-  runed@0.37.1(@sveltejs/kit@2.64.0(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.56.3(@typescript-eslint/types@8.44.1))(vite@8.0.16(@types/node@22.18.6)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1)))(svelte@5.56.3(@typescript-eslint/types@8.44.1))(typescript@5.9.2)(vite@8.0.16(@types/node@22.18.6)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1)))(svelte@5.56.3(@typescript-eslint/types@8.44.1))(zod@4.4.3):
+  runed@0.37.1(@sveltejs/kit@2.64.0(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.56.3(@typescript-eslint/types@8.44.1))(vite@8.0.16(@types/node@24.13.2)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1)))(svelte@5.56.3(@typescript-eslint/types@8.44.1))(typescript@5.9.2)(vite@8.0.16(@types/node@24.13.2)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1)))(svelte@5.56.3(@typescript-eslint/types@8.44.1))(zod@4.4.3):
     dependencies:
       dequal: 2.0.3
       esm-env: 1.2.2
       lz-string: 1.5.0
       svelte: 5.56.3(@typescript-eslint/types@8.44.1)
     optionalDependencies:
-      '@sveltejs/kit': 2.64.0(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.56.3(@typescript-eslint/types@8.44.1))(vite@8.0.16(@types/node@22.18.6)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1)))(svelte@5.56.3(@typescript-eslint/types@8.44.1))(typescript@5.9.2)(vite@8.0.16(@types/node@22.18.6)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1))
+      '@sveltejs/kit': 2.64.0(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.56.3(@typescript-eslint/types@8.44.1))(vite@8.0.16(@types/node@24.13.2)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1)))(svelte@5.56.3(@typescript-eslint/types@8.44.1))(typescript@5.9.2)(vite@8.0.16(@types/node@24.13.2)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1))
       zod: 4.4.3
 
   rw@1.3.3: {}
@@ -6677,7 +6677,7 @@ snapshots:
 
   uint8array-extras@1.5.0: {}
 
-  undici-types@6.21.0: {}
+  undici-types@7.18.2: {}
 
   undici@7.14.0: {}
 
@@ -6707,7 +6707,7 @@ snapshots:
       svelte: 5.56.3(@typescript-eslint/types@8.44.1)
       svelte-toolbelt: 0.7.1(svelte@5.56.3(@typescript-eslint/types@8.44.1))
 
-  vite@8.0.16(@types/node@22.18.6)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1):
+  vite@8.0.16(@types/node@24.13.2)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1):
     dependencies:
       lightningcss: 1.32.0
       picomatch: 4.0.4
@@ -6715,15 +6715,15 @@ snapshots:
       rolldown: 1.0.3
       tinyglobby: 0.2.17
     optionalDependencies:
-      '@types/node': 22.18.6
+      '@types/node': 24.13.2
       esbuild: 0.27.0
       fsevents: 2.3.3
       jiti: 2.7.0
       yaml: 2.8.1
 
-  vitefu@1.1.3(vite@8.0.16(@types/node@22.18.6)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1)):
+  vitefu@1.1.3(vite@8.0.16(@types/node@24.13.2)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1)):
     optionalDependencies:
-      vite: 8.0.16(@types/node@22.18.6)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1)
+      vite: 8.0.16(@types/node@24.13.2)(esbuild@0.27.0)(jiti@2.7.0)(yaml@2.8.1)
 
   when-exit@2.1.5: {}
 

@@ -8,7 +8,9 @@
 	import * as Select from '$lib/components/ui/select/index.js';
 	import * as Table from '$lib/components/ui/table/index.js';
 	import MailPlusIcon from '@lucide/svelte/icons/mail-plus';
+	import LinkIcon from '@lucide/svelte/icons/link';
 	import XIcon from '@lucide/svelte/icons/x';
+	import { page } from '$app/state';
 	import { toast } from 'svelte-sonner';
 	import { showErrorToast } from '$lib/toast.js';
 	import { authClient } from '$lib/auth-client.js';
@@ -27,23 +29,48 @@
 
 	const dateFormatter = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' });
 
+	// The invitation itself is the source of truth — a shareable link. The email
+	// is best-effort (Better Auth swallows send failures), and a freshly-cloned
+	// template may have no email provider configured at all, so the invite link
+	// is always available as a fallback.
+	function invitationUrl(invitationId: string): string {
+		return `${page.url.origin}/accept-invitation/${invitationId}`;
+	}
+
+	async function copyInviteLink(invitationId: string) {
+		try {
+			await navigator.clipboard.writeText(invitationUrl(invitationId));
+			toast.success('Invite link copied to clipboard');
+		} catch {
+			toast.error('Could not copy the invite link');
+		}
+	}
+
 	async function handleInvite(e: Event) {
 		e.preventDefault();
 		if (!inviteEmail.trim() || isInviting) return;
 		isInviting = true;
 		try {
-			const { error } = await authClient.organization.inviteMember({
-				email: inviteEmail.trim(),
+			const email = inviteEmail.trim();
+			const { data, error } = await authClient.organization.inviteMember({
+				email,
 				role: inviteRole,
 				organizationId: organization.id
 			});
 			if (error) throw new Error(error.message);
-			toast.success(`Invitation sent to ${inviteEmail.trim()}`);
+			const invitationId = data?.id;
+			// Don't claim the email was delivered — offer the link directly.
+			toast.success(`${email} has been invited`, {
+				description: "If they don't receive the email, copy the invite link to share it directly.",
+				...(invitationId
+					? { action: { label: 'Copy link', onClick: () => copyInviteLink(invitationId) } }
+					: {})
+			});
 			inviteDialogOpen = false;
 			inviteEmail = '';
 			inviteRole = 'member';
 		} catch (error) {
-			showErrorToast(error, 'Failed to send invitation');
+			showErrorToast(error, 'Failed to create invitation');
 		} finally {
 			isInviting = false;
 		}
@@ -83,7 +110,7 @@
 						<Table.Head>Email</Table.Head>
 						<Table.Head>Role</Table.Head>
 						<Table.Head>Expires</Table.Head>
-						<Table.Head class="w-12"><span class="sr-only">Actions</span></Table.Head>
+						<Table.Head class="w-24"><span class="sr-only">Actions</span></Table.Head>
 					</Table.Row>
 				</Table.Header>
 				<Table.Body>
@@ -97,14 +124,24 @@
 								{dateFormatter.format(invitation.expiresAt)}
 							</Table.Cell>
 							<Table.Cell>
-								<Button
-									variant="ghost"
-									size="icon"
-									onclick={() => handleCancel(invitation)}
-									aria-label="Cancel invitation"
-								>
-									<XIcon class="size-4" />
-								</Button>
+								<div class="flex items-center justify-end gap-1">
+									<Button
+										variant="ghost"
+										size="icon"
+										onclick={() => copyInviteLink(invitation.id)}
+										aria-label="Copy invite link"
+									>
+										<LinkIcon class="size-4" />
+									</Button>
+									<Button
+										variant="ghost"
+										size="icon"
+										onclick={() => handleCancel(invitation)}
+										aria-label="Cancel invitation"
+									>
+										<XIcon class="size-4" />
+									</Button>
+								</div>
 							</Table.Cell>
 						</Table.Row>
 					{/each}
@@ -119,7 +156,8 @@
 		<Dialog.Header>
 			<Dialog.Title>Invite member</Dialog.Title>
 			<Dialog.Description>
-				They'll receive an email with a link to join {organization.name}.
+				We'll email them a link to join {organization.name} — or copy the invite link from the list to
+				share it yourself.
 			</Dialog.Description>
 		</Dialog.Header>
 		<form onsubmit={handleInvite} class="space-y-4">

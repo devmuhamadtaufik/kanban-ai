@@ -3,15 +3,13 @@
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import { useAuth } from '@mmailaender/convex-better-auth-svelte/svelte';
+	import { normalizeRedirect } from '$lib/utils.js';
 
 	const auth = useAuth();
 
 	// Optional post-auth destination (e.g. /accept-invitation/...). Only
 	// same-origin paths are allowed to prevent open redirects.
-	const redirectTo = $derived.by(() => {
-		const redirect = page.url.searchParams.get('redirect');
-		return redirect?.startsWith('/') && !redirect.startsWith('//') ? redirect : '/dashboard';
-	});
+	const redirectTo = $derived(normalizeRedirect(page.url.searchParams.get('redirect')));
 
 	$effect(() => {
 		if (!auth.isLoading && auth.isAuthenticated) {

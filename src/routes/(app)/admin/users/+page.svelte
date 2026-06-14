@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { api } from '$convex/_generated/api.js';
-	import { useQuery } from '@mmailaender/convex-svelte';
+	import { useConvexClient, useQuery } from '@mmailaender/convex-svelte';
 	import { Separator } from '$lib/components/ui/separator/index.js';
 	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
 	import * as Table from '$lib/components/ui/table/index.js';
@@ -15,6 +15,7 @@
 	import * as Select from '$lib/components/ui/select/index.js';
 	import { UserPlus, Ban, Trash2, VenetianMask } from '@lucide/svelte';
 	import { toast } from 'svelte-sonner';
+	import { showErrorToast } from '$lib/toast.js';
 	import { authClient } from '$lib/auth-client';
 
 	interface User {
@@ -31,6 +32,8 @@
 		{ value: 'user', label: 'User' },
 		{ value: 'admin', label: 'Admin' }
 	];
+
+	const client = useConvexClient();
 
 	// Get current user
 	const currentUserResponse = useQuery(api.auth.getCurrentUser, {});
@@ -83,16 +86,13 @@
 		}
 	}
 
-	// Load users on mount
+	// Load users on mount and whenever the page or page size changes. loadUsers
+	// reads currentPage/perPage synchronously, so this single effect re-runs on
+	// their changes — two overlapping effects previously fired duplicate requests.
 	$effect(() => {
+		void currentPage;
+		void perPage;
 		loadUsers();
-	});
-
-	// Reload users when page changes
-	$effect(() => {
-		if (currentPage) {
-			loadUsers();
-		}
 	});
 
 	async function handleCreateUser() {
@@ -208,20 +208,17 @@
 		if (!userToDelete) return;
 
 		try {
-			const { error } = await authClient.admin.removeUser({
-				userId: userToDelete
-			});
-
-			if (error) {
-				throw new Error(error.message);
-			}
+			// Goes through a Convex action (not authClient.admin.removeUser) so the
+			// user's organizations and billing are cleaned up — and a user who owns
+			// a shared organization is blocked — before the user is deleted.
+			await client.action(api.admin.removeUser, { userId: userToDelete });
 
 			toast.success('User deleted');
 			showDeleteDialog = false;
 			userToDelete = null;
 			await loadUsers();
 		} catch (error) {
-			toast.error('Failed to delete user: ' + (error as Error).message);
+			showErrorToast(error, 'Failed to delete user');
 		}
 	}
 

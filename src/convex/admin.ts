@@ -1,11 +1,12 @@
 import { action, query } from './_generated/server';
 import { ConvexError, v } from 'convex/values';
 import { paginationOptsValidator } from 'convex/server';
-import { isCustomerNotFound, requireAutumn, toBillingError } from './autumn';
+import { getAutumn, isCustomerNotFound, requireAutumn, toBillingError } from './autumn';
 import { type DataModel } from './_generated/dataModel';
 import { type GenericCtx } from '@convex-dev/better-auth';
-import { authComponent } from './auth';
-import { findMany, findOne } from './authAdapter';
+import { authComponent, createAuth } from './auth';
+import { deleteMany, findMany, findOne } from './authAdapter';
+import { normalizeOrganizationRoles } from '../lib/organizations';
 
 /**
  * Admin-only queries over Better Auth's organization tables.
@@ -218,5 +219,113 @@ export const getOrganizationBilling = action({
 			if (isCustomerNotFound(error)) return { data: null, error: null };
 			return { data: null, error: toBillingError(error) };
 		}
+	}
+});
+
+/**
+ * Clean up a user's organizations, leaving the user row for the caller to
+ * delete afterward. Ownership is immutable and an organization can't outlive
+ * its owner:
+ *
+ * - An org the user solely owns that still has **other members** BLOCKS the
+ *   deletion (throws before anything is deleted) — the admin must remove those
+ *   members or delete the org first, so deleting one user never silently evicts
+ *   a team or cancels their subscription.
+ * - An org the user solely owns with **no other members** is cascade-deleted
+ *   (Autumn customer, invitations, members, org row), mirroring
+ *   `beforeDeleteOrganization`.
+ * - Orgs where the user is a **non-owner** member: just drop the membership.
+ *
+ * The block check runs before any deletes, and the user itself is deleted only
+ * after this returns, so a blocked deletion leaves the user able to sign in and
+ * a mid-cascade failure leaves the user (and not-yet-processed orgs) intact and
+ * the operation safe to retry.
+ */
+async function cascadeUserOrganizations(ctx: GenericCtx<DataModel>, userId: string) {
+	// Collect the orgs this user owns.
+	const ownedOrgIds: string[] = [];
+	let cursor: string | null = null;
+	do {
+		const memberships = await findMany(ctx, {
+			model: 'member',
+			where: [{ field: 'userId', value: userId }],
+			paginationOpts: { numItems: 200, cursor }
+		});
+		for (const member of memberships.page) {
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			const row = member as any;
+			if (normalizeOrganizationRoles(row.role).includes('owner')) {
+				ownedOrgIds.push(String(row.organizationId));
+			}
+		}
+		cursor = memberships.isDone ? null : (memberships.continueCursor ?? null);
+	} while (cursor);
+
+	// Block if any owned org still has other members (no mutations yet).
+	for (const orgId of ownedOrgIds) {
+		const members = await findMany(ctx, {
+			model: 'member',
+			where: [{ field: 'organizationId', value: orgId }],
+			paginationOpts: { numItems: 1000, cursor: null }
+		});
+		const hasOtherMembers = members.page.some(
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			(member: any) => String(member.userId) !== userId
+		);
+		if (hasOtherMembers) {
+			throw new ConvexError(
+				'This user owns organizations with other members. Remove those members or delete the organizations before deleting the user.'
+			);
+		}
+	}
+
+	// Cascade-delete each solo-owned org. Billing first (mirroring
+	// beforeDeleteOrganization); a failure throws before the user is deleted.
+	const autumn = getAutumn();
+	for (const orgId of ownedOrgIds) {
+		if (autumn) {
+			try {
+				await autumn.customers.delete({ customerId: orgId, deleteInStripe: true });
+			} catch (error) {
+				if (!isCustomerNotFound(error)) {
+					console.error('Failed to delete Autumn customer during user deletion:', error);
+					throw new ConvexError("Failed to cancel an organization's subscription");
+				}
+			}
+		}
+		await deleteMany(ctx, {
+			model: 'invitation',
+			where: [{ field: 'organizationId', value: orgId }]
+		});
+		await deleteMany(ctx, { model: 'member', where: [{ field: 'organizationId', value: orgId }] });
+		await deleteMany(ctx, { model: 'organization', where: [{ field: '_id', value: orgId }] });
+	}
+
+	// Drop any remaining memberships (orgs where the user was a non-owner).
+	await deleteMany(ctx, { model: 'member', where: [{ field: 'userId', value: userId }] });
+}
+
+/**
+ * Delete a user (admin only), cleaning up their organizations and billing
+ * first. This orchestrates the deletion rather than relying on a Better Auth
+ * `user.delete` hook: `removeUser` deletes the user's sessions and accounts
+ * *before* any `user` model hook runs, so a hook that blocked or failed would
+ * leave the user unable to authenticate. Ordering it here keeps it correct —
+ * decide and clean up org/billing state, then delete the user.
+ */
+export const removeUser = action({
+	args: { userId: v.string() },
+	returns: v.null(),
+	handler: async (ctx, args) => {
+		const admin = await requireAdmin(ctx);
+		if (String(admin._id) === args.userId) {
+			// Better Auth also rejects self-deletion, but we must catch it before
+			// cascading so we don't tear down the admin's own orgs then abort.
+			throw new ConvexError("You can't delete your own account");
+		}
+		await cascadeUserOrganizations(ctx, args.userId);
+		const { auth, headers } = await authComponent.getAuth(createAuth, ctx);
+		await auth.api.removeUser({ body: { userId: args.userId }, headers });
+		return null;
 	}
 });

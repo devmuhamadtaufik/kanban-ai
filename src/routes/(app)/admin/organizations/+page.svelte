@@ -25,12 +25,14 @@
 	let cursor = $state<string | null>(null);
 	let previousCursors = $state<Array<string | null>>([]);
 
-	// Reset pagination when the search changes
-	$effect(() => {
-		void debouncedSearch.current;
+	// Reset pagination when the search changes. Done in the search field's
+	// input handler (below) rather than a state-syncing $effect, per the
+	// project's guidance against effects — and it avoids a transient query
+	// with the previous cursor before the effect would have reset it.
+	function resetPagination() {
 		cursor = null;
 		previousCursors = [];
-	});
+	}
 
 	const organizationsResponse = useQuery(api.admin.listOrganizations, () => ({
 		paginationOpts: { numItems: PAGE_SIZE, cursor },
@@ -64,15 +66,23 @@
 	}
 
 	let billing = $state<BillingSummary | null>(null);
+	let billingError = $state<string | null>(null);
 	let isBillingLoading = $state(false);
 
 	async function openOrganization(organizationId: string) {
 		selectedOrganizationId = organizationId;
 		billing = null;
+		billingError = null;
 		isBillingLoading = true;
 		try {
 			const result = await client.action(api.admin.getOrganizationBilling, { organizationId });
 			if (selectedOrganizationId !== organizationId) return;
+			// Distinguish a billing failure (misconfigured/unreachable Autumn)
+			// from an organization that genuinely has no customer yet.
+			if (result?.error) {
+				billingError = result.error.message;
+				return;
+			}
 			billing = {
 				customerExists: Boolean(result?.data),
 				plans: (result?.data?.subscriptions ?? []).map(
@@ -121,7 +131,12 @@
 					from the Users page.
 				</p>
 			</div>
-			<Input bind:value={search} placeholder="Search by name..." class="sm:max-w-xs" />
+			<Input
+				bind:value={search}
+				oninput={resetPagination}
+				placeholder="Search by name..."
+				class="sm:max-w-xs"
+			/>
 		</div>
 
 		<Separator />
@@ -231,6 +246,8 @@
 					<h3 class="text-sm font-semibold">Billing</h3>
 					{#if isBillingLoading}
 						<Skeleton class="h-6 w-1/2" />
+					{:else if billingError}
+						<p class="text-sm text-destructive">{billingError}</p>
 					{:else if billing?.plans.length}
 						<div class="flex flex-wrap gap-2">
 							{#each billing.plans as plan (plan.name)}

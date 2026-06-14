@@ -32,7 +32,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version-file: '.node-version'
           cache: 'pnpm'
 
       - name: Install dependencies
@@ -46,7 +46,7 @@ jobs:
         run: pnpm run build
 
       - name: Set Cloudflare Node Version
-        run: echo "20" > ./.svelte-kit/cloudflare/.node-version
+        run: cp .node-version ./.svelte-kit/cloudflare/.node-version
 
       - name: Extract Repository Name
         id: extract_repo

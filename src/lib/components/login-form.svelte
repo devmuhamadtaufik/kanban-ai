@@ -6,6 +6,7 @@
 	import { authClient } from '$lib/auth-client.js';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
+	import { normalizeRedirect } from '$lib/utils.js';
 	import { getContext } from 'svelte';
 
 	interface Props {
@@ -13,10 +14,6 @@
 		mode?: 'signin' | 'signup';
 		/** Path to navigate to after a successful sign-in (must start with '/'). */
 		redirectTo?: string;
-	}
-
-	function normalizeRedirect(path: string): string {
-		return path.startsWith('/') && !path.startsWith('//') ? path : '/dashboard';
 	}
 
 	const { id, mode = 'signin', redirectTo = '/dashboard' }: Props = $props();
