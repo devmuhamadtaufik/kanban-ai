@@ -1,15 +1,41 @@
 <script lang="ts">
-	import { CreditCard, EllipsisVertical, LogOut, Bell, CircleUser } from '@lucide/svelte';
+	import {
+		CreditCard,
+		EllipsisVertical,
+		LogOut,
+		Bell,
+		CircleUser,
+		VenetianMask
+	} from '@lucide/svelte';
 	import * as Avatar from '$lib/components/ui/avatar/index.js';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
 	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
 	import { authClient } from '$lib/auth-client.js';
+	import { showErrorToast } from '$lib/toast.js';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 
 	let { user }: { user: { name: string; email: string; avatar: string } } = $props();
 
 	const sidebar = Sidebar.useSidebar();
+
+	// Set when an admin is impersonating this session (admin plugin)
+	const session = authClient.useSession();
+	let isImpersonating = $derived(Boolean($session.data?.session.impersonatedBy));
+
+	async function handleStopImpersonating() {
+		try {
+			const { error } = await authClient.admin.stopImpersonating();
+			if (error) throw new Error(error.message);
+			// Refresh the convex_jwt cookie for the restored admin session —
+			// it's only re-issued on get-session, and SSR loads read it directly
+			await authClient.getSession({ query: { disableCookieCache: true } });
+			// Full reload so the Convex client picks up the admin session again
+			window.location.assign('/admin/users');
+		} catch (error) {
+			showErrorToast(error, 'Failed to stop impersonating');
+		}
+	}
 
 	// Get user initials from name
 	const initials = $derived.by(() => {
@@ -90,6 +116,12 @@
 					</DropdownMenu.Item>
 				</DropdownMenu.Group>
 				<DropdownMenu.Separator />
+				{#if isImpersonating}
+					<DropdownMenu.Item onclick={handleStopImpersonating}>
+						<VenetianMask />
+						Stop impersonating
+					</DropdownMenu.Item>
+				{/if}
 				<DropdownMenu.Item onclick={handleSignOut}>
 					<LogOut />
 					Log out

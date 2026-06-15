@@ -372,12 +372,11 @@ import { api } from '$convex/_generated/api';
 let userId = $state<Id<'users'> | null>(null);
 const client = useConvexClient();
 
-// Conditional reactive queries using $derived for Svelte 5
-let currentTaskQuery = $derived(
-	userId
-		? useQuery(api.tasks.getCurrentTask, () => ({ userId: userId! }))
-		: { data: null, isLoading: false }
-);
+// Conditional reactive queries: return 'skip' from the args closure.
+// (Do NOT call useQuery inside $derived — useQuery must be created once
+// during component init; 'skip' keeps a single stable query that only
+// subscribes when the condition holds.)
+const currentTaskQuery = useQuery(api.tasks.getCurrentTask, () => (userId ? { userId } : 'skip'));
 
 // Access reactive data
 let currentTask = $derived(currentTaskQuery.data);
@@ -402,10 +401,10 @@ async function handleSync() {
 ### Key Principles for Real-time Updates
 
 1. **Reactive Queries**: Use `useQuery(api.function, () => args)` with closure syntax for reactive arguments
-2. **Conditional Queries**: Use `$derived` to conditionally create queries based on state in Svelte 5
+2. **Conditional Queries**: Return `'skip'` from the args closure to pause the subscription; never call `useQuery` inside `$derived`
 3. **Client Operations**: Use `useConvexClient()` then `client.mutation()` and `client.action()` for writes
 4. **Automatic Updates**: Data automatically updates in real-time when Convex database changes
-5. **Non-null Assertions**: Use `userId!` in closures when you know the value is not null due to conditional logic
+5. **Skipped Queries**: A skipped query reports `isLoading: false`, `error: null`, and `data: undefined` (it holds no active subscription) until its condition holds
 6. **Loading States**: Access `query.isLoading` for loading indicators
 7. **Error Handling**: Access `query.error` for error states
 

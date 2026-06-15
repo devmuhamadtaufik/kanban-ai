@@ -2,25 +2,37 @@ import { createConvexHttpClient } from '@mmailaender/convex-better-auth-svelte/s
 import { api } from '$convex/_generated/api';
 import type { PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async () => {
-	const client = createConvexHttpClient();
+export const load: PageServerLoad = async ({ locals }) => {
+	// Pass the auth token explicitly. The no-arg form relies on an
+	// AsyncLocalStorage lookup that doesn't see the token set by the SvelteKit
+	// hook, so `getCustomer` would run unauthenticated and always report no
+	// active organization. (Same pattern as the admin layout load.)
+	const client = createConvexHttpClient({ token: locals.token });
 
 	try {
-		// Fetch products and customer data in parallel
-		const [productsResult, customerResult] = await Promise.all([
-			client.action(api.billing.listProducts, {}),
+		// Fetch plans and customer data in parallel
+		const [plansResult, customerResult] = await Promise.all([
+			client.action(api.billing.listPlans, {}),
 			client.action(api.billing.getCustomer, {})
 		]);
 
+		// Surface billing failures instead of rendering them as an empty plan
+		// list ("no_organization" just means no customer to show yet).
+		const billingError = [plansResult?.error, customerResult?.error].find(
+			(error) => error && error.code !== 'no_organization'
+		);
+
 		return {
-			products: productsResult?.data?.list || [],
-			customerData: customerResult || null
+			plans: plansResult?.data?.list || [],
+			customerData: customerResult || null,
+			billingError: billingError?.message ?? null
 		};
 	} catch (error) {
 		console.error('Error loading billing data:', error);
 		return {
-			products: [],
-			customerData: null
+			plans: [],
+			customerData: null,
+			billingError: 'Failed to load billing data'
 		};
 	}
 };

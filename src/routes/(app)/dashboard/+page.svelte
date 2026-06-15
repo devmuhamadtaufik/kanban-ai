@@ -7,6 +7,7 @@
 	import ChartAreaInteractive from '$lib/components/chart-area-interactive.svelte';
 	import DataTable from '$lib/components/data-table.svelte';
 	import data from './data.js';
+	import { siteConfig } from '$lib/config.js';
 
 	// Get current user from Convex
 	const currentUserResponse = useQuery(api.auth.getCurrentUser, {});
@@ -14,7 +15,7 @@
 </script>
 
 <svelte:head>
-	<title>Dashboard | SaaS Template</title>
+	<title>Dashboard | {siteConfig.name}</title>
 </svelte:head>
 
 <!-- Header -->

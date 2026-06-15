@@ -7,6 +7,7 @@
 	import AccountSettings from './account-settings.svelte';
 	import PasswordSettings from './password-settings.svelte';
 	import EmailSettings from './email-settings.svelte';
+	import { siteConfig } from '$lib/config.js';
 
 	// Get current user from Convex
 	const currentUserResponse = useQuery(api.auth.getCurrentUser, {});
@@ -14,7 +15,7 @@
 </script>
 
 <svelte:head>
-	<title>Settings | SaaS Template</title>
+	<title>Settings | {siteConfig.name}</title>
 </svelte:head>
 
 <!-- Header -->

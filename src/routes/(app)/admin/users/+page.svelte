@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { api } from '$convex/_generated/api.js';
-	import { useQuery } from '@mmailaender/convex-svelte';
+	import { useConvexClient, useQuery } from '@mmailaender/convex-svelte';
 	import { Separator } from '$lib/components/ui/separator/index.js';
 	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
 	import * as Table from '$lib/components/ui/table/index.js';
@@ -13,8 +13,9 @@
 	import { Label } from '$lib/components/ui/label/index.js';
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import * as Select from '$lib/components/ui/select/index.js';
-	import { UserPlus, Ban, Trash2 } from '@lucide/svelte';
+	import { UserPlus, Ban, Trash2, VenetianMask } from '@lucide/svelte';
 	import { toast } from 'svelte-sonner';
+	import { showErrorToast } from '$lib/toast.js';
 	import { authClient } from '$lib/auth-client';
 
 	interface User {
@@ -31,6 +32,8 @@
 		{ value: 'user', label: 'User' },
 		{ value: 'admin', label: 'Admin' }
 	];
+
+	const client = useConvexClient();
 
 	// Get current user
 	const currentUserResponse = useQuery(api.auth.getCurrentUser, {});
@@ -83,16 +86,13 @@
 		}
 	}
 
-	// Load users on mount
+	// Load users on mount and whenever the page or page size changes. loadUsers
+	// reads currentPage/perPage synchronously, so this single effect re-runs on
+	// their changes — two overlapping effects previously fired duplicate requests.
 	$effect(() => {
+		void currentPage;
+		void perPage;
 		loadUsers();
-	});
-
-	// Reload users when page changes
-	$effect(() => {
-		if (currentPage) {
-			loadUsers();
-		}
 	});
 
 	async function handleCreateUser() {
@@ -185,24 +185,40 @@
 		showDeleteDialog = true;
 	}
 
-	async function handleDeleteUser() {
-		if (!userToDelete) return;
-
+	async function handleImpersonate(userId: string) {
 		try {
-			const { error } = await authClient.admin.removeUser({
-				userId: userToDelete
-			});
+			const { error } = await authClient.admin.impersonateUser({ userId });
 
 			if (error) {
 				throw new Error(error.message);
 			}
+
+			// Refresh the convex_jwt cookie for the impersonated session — it's
+			// only re-issued on get-session, and SSR loads read it directly
+			await authClient.getSession({ query: { disableCookieCache: true } });
+			// Full reload so the Convex client and all queries pick up the
+			// impersonated session ("Stop impersonating" lives in the user menu)
+			window.location.assign('/dashboard');
+		} catch (error) {
+			toast.error('Failed to impersonate user: ' + (error as Error).message);
+		}
+	}
+
+	async function handleDeleteUser() {
+		if (!userToDelete) return;
+
+		try {
+			// Goes through a Convex action (not authClient.admin.removeUser) so the
+			// user's organizations and billing are cleaned up — and a user who owns
+			// a shared organization is blocked — before the user is deleted.
+			await client.action(api.admin.removeUser, { userId: userToDelete });
 
 			toast.success('User deleted');
 			showDeleteDialog = false;
 			userToDelete = null;
 			await loadUsers();
 		} catch (error) {
-			toast.error('Failed to delete user: ' + (error as Error).message);
+			showErrorToast(error, 'Failed to delete user');
 		}
 	}
 
@@ -300,6 +316,25 @@
 							<Table.Cell class="text-right">
 								<Tooltip.Provider>
 									<div class="flex justify-end gap-2">
+										<Tooltip.Root>
+											<Tooltip.Trigger>
+												<Button
+													variant="outline"
+													size="sm"
+													onclick={() => handleImpersonate(user.id)}
+													disabled={user.id === currentUser?._id}
+												>
+													<VenetianMask class="h-4 w-4" />
+												</Button>
+											</Tooltip.Trigger>
+											<Tooltip.Content>
+												<p>
+													{user.id === currentUser?._id
+														? 'Cannot impersonate yourself'
+														: 'Impersonate this user'}
+												</p>
+											</Tooltip.Content>
+										</Tooltip.Root>
 										{#if user.banned}
 											<Tooltip.Root>
 												<Tooltip.Trigger>

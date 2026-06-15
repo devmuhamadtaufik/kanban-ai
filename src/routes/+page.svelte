@@ -10,13 +10,14 @@
 		CreditCard,
 		Settings,
 		Users,
-		Github,
 		BookOpen,
 		GitBranch,
 		Cloud,
 		Mail,
 		PiggyBank
 	} from '@lucide/svelte';
+	import GithubIcon from '$lib/components/github-icon.svelte';
+	import { siteConfig } from '$lib/config.js';
 
 	const to = {
 		signUp: resolve('/auth/sign-up'),
@@ -25,16 +26,23 @@
 	};
 </script>
 
+<svelte:head>
+	<title>{siteConfig.name}</title>
+	<meta name="description" content={siteConfig.description} />
+</svelte:head>
+
 <section class="relative overflow-hidden">
+	<!-- eslint-disable svelte/no-navigation-without-resolve -->
 	<a
-		href="https://github.com/joachimchauvet/modernstack-saas"
+		href={siteConfig.links.github}
 		target="_blank"
 		rel="noopener noreferrer"
 		class="group fixed top-6 right-6 z-20 inline-flex items-center gap-2 rounded-full border border-border bg-background/80 px-4 py-2 text-sm font-medium text-foreground shadow-sm backdrop-blur transition hover:border-primary hover:text-primary"
 	>
-		<Github class="h-4 w-4 transition group-hover:scale-110" />
+		<GithubIcon class="h-4 w-4 transition group-hover:scale-110" />
 		<span>View on GitHub</span>
 	</a>
+	<!-- eslint-enable svelte/no-navigation-without-resolve -->
 	<div
 		class="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-b from-background via-background to-background/60"
 	></div>
@@ -45,7 +53,7 @@
 				<h1 class="text-4xl leading-tight font-semibold tracking-tight text-balance sm:text-5xl">
 					Build your SaaS faster with our
 					<span class="bg-gradient-to-r from-primary to-foreground bg-clip-text text-transparent">
-						ModernStack SaaS Starter</span
+						{siteConfig.name} Starter</span
 					>
 				</h1>
 				<p class="mt-4 text-pretty text-muted-foreground sm:text-lg">
@@ -157,7 +165,7 @@
 				</p>
 			</div>
 			<div class="rounded-lg border p-6">
-				<div class="mb-2 text-primary"><Github class="h-5 w-5" /></div>
+				<div class="mb-2 text-primary"><GithubIcon class="h-5 w-5" /></div>
 				<p class="font-medium">Free & open source</p>
 				<p class="mt-1 text-sm text-muted-foreground">
 					MIT licensed starter you can self-host or extend without limits.
@@ -205,7 +213,7 @@
 			<div class="mx-auto max-w-3xl text-center">
 				<h2 class="text-3xl font-semibold tracking-tight">Frequently Asked Questions</h2>
 				<p class="mt-2 text-muted-foreground">
-					Everything you need to know about the ModernStack SaaS Starter
+					Everything you need to know about the {siteConfig.name} Starter
 				</p>
 			</div>
 
@@ -335,14 +343,16 @@
 				class="ml-1 underline">Convex Modern Stack Hackathon</a
 			>.
 		</p>
+		<!-- eslint-disable svelte/no-navigation-without-resolve -->
 		<a
-			href="https://github.com/joachimchauvet/modernstack-saas"
+			href={siteConfig.links.github}
 			target="_blank"
 			rel="noopener noreferrer"
 			class="inline-flex items-center gap-2 rounded-full border border-border px-3 py-1.5 text-foreground transition hover:border-primary hover:text-primary"
 		>
-			<Github class="h-4 w-4" />
+			<GithubIcon class="h-4 w-4" />
 			<span>Star us on GitHub</span>
 		</a>
+		<!-- eslint-enable svelte/no-navigation-without-resolve -->
 	</div>
 </footer>

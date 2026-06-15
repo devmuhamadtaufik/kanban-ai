@@ -4,11 +4,45 @@ import { components } from './_generated/api';
 import { type DataModel } from './_generated/dataModel';
 import { query } from './_generated/server';
 import { betterAuth, type BetterAuthOptions } from 'better-auth';
-import { admin } from 'better-auth/plugins';
+import { APIError } from 'better-auth/api';
+import { admin, organization } from 'better-auth/plugins';
+import { getAutumn, isCustomerNotFound } from './autumn';
 import authSchema from './betterAuth/schema';
 import authConfig from './auth.config';
+import { actionEmailHtml, escapeHtml, sendEmail } from './email';
+import { countOwnedOrganizations, findOne, updateMany } from './authAdapter';
+import { siteConfig } from '../lib/config';
+import {
+	assignableOrganizationRoles,
+	normalizeOrganizationRoles,
+	slugifyOrganizationName
+} from '../lib/organizations';
 
 const siteUrl = process.env.SITE_URL!;
+
+async function createAutumnCustomerForOrganization({
+	organization,
+	user
+}: {
+	organization: { id: string; name: string };
+	user: { email: string };
+}) {
+	const autumn = getAutumn();
+	if (!autumn) return;
+
+	try {
+		await autumn.customers.getOrCreate({
+			customerId: organization.id,
+			name: organization.name,
+			email: user.email
+		});
+	} catch (error) {
+		// Don't throw from afterCreateOrganization: Better Auth has already
+		// persisted the org/member rows by then, so throwing would fail the
+		// request without rolling those writes back.
+		console.error('Failed to create Autumn customer:', error);
+	}
+}
 
 // The component client has methods needed for integrating Convex with Better Auth,
 // as well as helper methods for general use.
@@ -18,6 +52,46 @@ export const authComponent = createClient<DataModel, typeof authSchema>(componen
 	}
 });
 
+/**
+ * Every user gets a default organization on sign-up. This keeps the data
+ * model uniform: billing and app data always hang off an organization, so
+ * the same template works for B2C (users stay in their own org) and B2B
+ * (users create or join shared organizations). It's a regular organization —
+ * the user can rename it, invite people into it, or delete it once they own
+ * another one (see the deletion guard in `organizationHooks` below).
+ */
+const createDefaultOrganization = async (
+	ctx: GenericCtx<DataModel>,
+	user: { id: string; name?: string | null; email: string }
+) => {
+	const auth = createAuth(ctx);
+	const slugBase = slugifyOrganizationName(user.name || user.email.split('@')[0]) || 'workspace';
+	return await auth.api.createOrganization({
+		body: {
+			name: user.name ? `${user.name}'s Workspace` : 'My Workspace',
+			slug: `${slugBase}-${crypto.randomUUID().slice(0, 8)}`,
+			// Server-side call: create the organization on behalf of the new user.
+			userId: user.id
+		}
+	});
+};
+
+/**
+ * Members and invitations may only carry a single canonical role —
+ * `owner` is reserved for the creator, and multi-role values (which Better
+ * Auth would store as comma-separated strings) are rejected so stored roles
+ * stay canonical and safe to compare by equality.
+ */
+const requireAssignableRole = (roles: string[]) => {
+	const isValid =
+		roles.length === 1 && (assignableOrganizationRoles as readonly string[]).includes(roles[0]);
+	if (!isValid) {
+		throw new APIError('BAD_REQUEST', {
+			message: `Role must be one of: ${assignableOrganizationRoles.join(', ')}`
+		});
+	}
+};
+
 // Plain options factory — used both by `betterAuth()` at runtime and by
 // `createApi()` in the component adapter so it can introspect the schema.
 
@@ -25,52 +99,33 @@ export const createOptions = (ctx: GenericCtx<DataModel>) =>
 	({
 		baseURL: siteUrl,
 		database: authComponent.adapter(ctx),
+		advanced: {
+			database: {
+				// Convex generates document ids; without this, flows that generate
+				// ids up front (e.g. organization invitations) fail validation.
+				generateId: false
+			}
+		},
 		// User configuration
 		user: {
 			changeEmail: {
 				enabled: true,
-				// eslint-disable-next-line @typescript-eslint/no-unused-vars
-				sendChangeEmailConfirmation: async ({ user, newEmail, url, token }, _request) => {
-					const resendApiKey = process.env.RESEND_API_KEY;
-					const from = process.env.RESET_EMAIL_FROM || 'ModernStack SaaS <no-reply@yourdomain.com>';
-					if (!resendApiKey) {
-						console.error('RESEND_API_KEY not set. Unable to send email change confirmation.');
-						return;
-					}
-					try {
-						const res = await fetch('https://api.resend.com/emails', {
-							method: 'POST',
-							headers: {
-								'Content-Type': 'application/json',
-								Authorization: `Bearer ${resendApiKey}`
-							},
-							body: JSON.stringify({
-								from,
-								to: user.email,
-								subject: 'Approve email change',
-								...(process.env.RESET_EMAIL_REPLY_TO
-									? { reply_to: process.env.RESET_EMAIL_REPLY_TO }
-									: {}),
-								html: `<p>Hello ${user.name ?? 'there'},</p>
-<p>We received a request to change your email address to <strong>${newEmail}</strong>.</p>
-<p>Click the button below to approve this change:</p>
-<p><a href="${url}" style="display:inline-block;padding:10px 16px;background:#111827;color:#fff;border-radius:6px;text-decoration:none">Approve Email Change</a></p>
-<p>If the button doesn't work, copy and paste this URL into your browser:</p>
-<p><a href="${url}">${url}</a></p>
-<p>If you didn't request this change, please ignore this email or contact support.</p>`
-							})
-						});
-						if (!res.ok) {
-							const text = await res.text();
-							console.error(
-								'Resend API error sending email change confirmation:',
-								res.status,
-								text
-							);
-						}
-					} catch (e) {
-						console.error('Failed to send email change confirmation:', e);
-					}
+				sendChangeEmailConfirmation: async ({ user, newEmail, url }) => {
+					await sendEmail({
+						to: user.email,
+						subject: 'Approve email change',
+						html: actionEmailHtml({
+							greeting: `Hello ${escapeHtml(user.name ?? 'there')},`,
+							bodyLines: [
+								`We received a request to change your email address to <strong>${escapeHtml(newEmail)}</strong>.`,
+								'Click the button below to approve this change:'
+							],
+							ctaLabel: 'Approve Email Change',
+							ctaUrl: url,
+							footerLine:
+								"If you didn't request this change, please ignore this email or contact support."
+						})
+					});
 				}
 			}
 		},
@@ -79,45 +134,20 @@ export const createOptions = (ctx: GenericCtx<DataModel>) =>
 			enabled: true,
 			requireEmailVerification: false,
 			// Send password reset emails via Resend
-			// token and _request are available if you need custom templates or logging
-			// eslint-disable-next-line @typescript-eslint/no-unused-vars
-			sendResetPassword: async ({ user, url, token }, _request) => {
-				const resendApiKey = process.env.RESEND_API_KEY;
-				const from = process.env.RESET_EMAIL_FROM || 'ModernStack SaaS <no-reply@yourdomain.com>';
-				if (!resendApiKey) {
-					console.error('RESEND_API_KEY not set. Unable to send reset password email.');
-					return;
-				}
-				const resetUrl = url; // Better Auth provides the full URL with token
-				try {
-					const res = await fetch('https://api.resend.com/emails', {
-						method: 'POST',
-						headers: {
-							'Content-Type': 'application/json',
-							Authorization: `Bearer ${resendApiKey}`
-						},
-						body: JSON.stringify({
-							from,
-							to: user.email,
-							subject: 'Reset your password',
-							...(process.env.RESET_EMAIL_REPLY_TO
-								? { reply_to: process.env.RESET_EMAIL_REPLY_TO }
-								: {}),
-							html: `<p>Hello ${user.name ?? 'there'},</p>
-<p>We received a request to reset your password. Click the button below to set a new password:</p>
-<p><a href="${resetUrl}" style="display:inline-block;padding:10px 16px;background:#111827;color:#fff;border-radius:6px;text-decoration:none">Reset Password</a></p>
-<p>If the button doesn't work, copy and paste this URL into your browser:</p>
-<p><a href="${resetUrl}">${resetUrl}</a></p>
-<p>If you didn't request this, you can safely ignore this email.</p>`
-						})
-					});
-					if (!res.ok) {
-						const text = await res.text();
-						console.error('Resend API error sending reset email:', res.status, text);
-					}
-				} catch (e) {
-					console.error('Failed to send reset password email:', e);
-				}
+			sendResetPassword: async ({ user, url }) => {
+				await sendEmail({
+					to: user.email,
+					subject: 'Reset your password',
+					html: actionEmailHtml({
+						greeting: `Hello ${escapeHtml(user.name ?? 'there')},`,
+						bodyLines: [
+							'We received a request to reset your password. Click the button below to set a new password:'
+						],
+						ctaLabel: 'Reset Password',
+						ctaUrl: url,
+						footerLine: "If you didn't request this, you can safely ignore this email."
+					})
+				});
 			}
 		},
 		socialProviders: {
@@ -130,11 +160,177 @@ export const createOptions = (ctx: GenericCtx<DataModel>) =>
 					}
 				: {})
 		},
+		databaseHooks: {
+			user: {
+				create: {
+					after: async (user, hookCtx) => {
+						try {
+							const organization = await createDefaultOrganization(ctx, user);
+							// `create.after` hooks run after the sign-up transaction, so the
+							// first session already exists by now — backfill its active
+							// organization (the `session.create.before` hook below covers
+							// all subsequent sign-ins).
+							if (organization && hookCtx) {
+								await hookCtx.context.adapter.updateMany({
+									model: 'session',
+									where: [{ field: 'userId', value: user.id }],
+									update: { activeOrganizationId: organization.id }
+								});
+							}
+						} catch (e) {
+							// Don't fail sign-up if organization creation fails; the user
+							// can still create an organization manually.
+							console.error('Failed to create default organization:', e);
+						}
+					}
+				}
+			},
+			session: {
+				create: {
+					// Sessions always start with an active organization so that
+					// org-scoped queries and billing have an unambiguous context.
+					before: async (session, hookCtx) => {
+						if (session.activeOrganizationId || !hookCtx) return;
+						const membership = await hookCtx.context.adapter.findOne<{
+							organizationId: string;
+						}>({
+							model: 'member',
+							where: [{ field: 'userId', value: session.userId }]
+						});
+						if (!membership) return;
+						return {
+							data: { ...session, activeOrganizationId: membership.organizationId }
+						};
+					}
+				}
+			}
+		},
 		plugins: [
 			// The Convex plugin is required for Convex compatibility
 			convex({ authConfig }),
 			// Admin plugin for roles/impersonation/banning APIs
-			admin()
+			admin(),
+			// Organizations with invitations; billing is scoped to the active organization
+			organization({
+				invitationExpiresIn: 60 * 60 * 24 * 7, // 7 days
+				// The template ships with email verification disabled; if you enable
+				// `requireEmailVerification` above, flip this to true as well so only
+				// verified addresses can view and accept invitations.
+				requireEmailVerificationOnInvitation: false,
+				// Ownership is immutable: every organization has exactly one owner,
+				// forever — its creator. Combined with the deletion guard below
+				// (you can't delete the only organization you own) and Better
+				// Auth's sole-owner-can't-leave rule, this guarantees every user
+				// always keeps an organization as their billing/data scope.
+				// Relax `beforeUpdateMemberRole` if a project needs ownership
+				// transfer.
+				//
+				// Better Auth accepts `string | string[]` roles and stores arrays
+				// as comma-separated strings, so all checks normalize roles and
+				// granted roles are restricted to a single canonical value —
+				// `"owner,member"`-style values would otherwise smuggle owner
+				// permissions past equality checks.
+				organizationHooks: {
+					afterCreateOrganization: async ({ organization, user }) => {
+						await createAutumnCustomerForOrganization({ organization, user });
+					},
+					beforeAddMember: async ({ member, organization }) => {
+						const roles = normalizeOrganizationRoles(member.role);
+						if (!roles.includes('owner')) {
+							requireAssignableRole(roles);
+							return;
+						}
+						// The only owner-role member is the creator, added while the
+						// organization is still empty at creation time.
+						const existingMember = await findOne(ctx, {
+							model: 'member',
+							where: [{ field: 'organizationId', value: organization.id }]
+						});
+						if (existingMember || roles.length > 1) {
+							throw new APIError('BAD_REQUEST', {
+								message: 'Organizations have a single owner'
+							});
+						}
+					},
+					beforeCreateInvitation: async ({ invitation }) => {
+						// Invitation acceptance bypasses beforeAddMember, so validate
+						// the role at the source.
+						requireAssignableRole(normalizeOrganizationRoles(invitation.role));
+					},
+					beforeUpdateMemberRole: async ({ member, newRole }) => {
+						if (normalizeOrganizationRoles(member.role).includes('owner')) {
+							throw new APIError('BAD_REQUEST', {
+								message: "The organization owner can't be changed"
+							});
+						}
+						requireAssignableRole(normalizeOrganizationRoles(newRole));
+					},
+					beforeRemoveMember: async ({ member }) => {
+						if (normalizeOrganizationRoles(member.role).includes('owner')) {
+							throw new APIError('BAD_REQUEST', {
+								message: "The organization owner can't be removed"
+							});
+						}
+					},
+					beforeDeleteOrganization: async ({ organization, user }) => {
+						// Deleting your only organization would leave you without a
+						// billing/data scope. Ownership can't be transferred, so the
+						// set of organizations a user owns only changes here.
+						if ((await countOwnedOrganizations(ctx, user.id)) <= 1) {
+							// Better Auth clears the session's activeOrganizationId
+							// before this hook runs — restore it so a rejected
+							// deletion doesn't leave the session without an active org.
+							await updateMany(ctx, {
+								model: 'session',
+								where: [
+									{ field: 'userId', value: user.id },
+									{ field: 'activeOrganizationId', value: null }
+								],
+								update: { activeOrganizationId: organization.id }
+							});
+							throw new APIError('BAD_REQUEST', {
+								message: "You can't delete the only organization you own"
+							});
+						}
+						// Clean up billing before the organization disappears. Failing
+						// here aborts the deletion rather than orphaning a paid
+						// subscription. Autumn's delete does NOT touch Stripe on its
+						// own; `deleteInStripe` deletes the Stripe customer, which
+						// immediately cancels any active subscriptions.
+						const autumn = getAutumn();
+						if (!autumn) return;
+						try {
+							await autumn.customers.delete({
+								customerId: organization.id,
+								deleteInStripe: true
+							});
+						} catch (error) {
+							if (isCustomerNotFound(error)) return;
+							console.error('Failed to delete Autumn customer:', error);
+							throw new APIError('INTERNAL_SERVER_ERROR', {
+								message: "Failed to cancel the organization's subscription"
+							});
+						}
+					}
+				},
+				sendInvitationEmail: async (data) => {
+					await sendEmail({
+						to: data.email,
+						subject: `Join ${data.organization.name} on ${siteConfig.name}`,
+						html: actionEmailHtml({
+							greeting: 'Hello,',
+							bodyLines: [
+								`<strong>${escapeHtml(data.inviter.user.name || data.inviter.user.email)}</strong> has invited you to join <strong>${escapeHtml(data.organization.name)}</strong>.`,
+								'This invitation expires in 7 days.'
+							],
+							ctaLabel: 'Accept Invitation',
+							ctaUrl: `${siteUrl}/accept-invitation/${data.id}`,
+							footerLine:
+								"If you weren't expecting this invitation, you can safely ignore this email."
+						})
+					});
+				}
+			})
 		]
 	}) satisfies BetterAuthOptions;
 

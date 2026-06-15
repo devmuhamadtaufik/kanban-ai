@@ -6,14 +6,25 @@
 	import { authClient } from '$lib/auth-client.js';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
+	import { normalizeRedirect } from '$lib/utils.js';
 	import { getContext } from 'svelte';
 
 	interface Props {
 		id?: string;
 		mode?: 'signin' | 'signup';
+		/** Path to navigate to after a successful sign-in (must start with '/'). */
+		redirectTo?: string;
 	}
 
-	const { id, mode = 'signin' }: Props = $props();
+	const { id, mode = 'signin', redirectTo = '/dashboard' }: Props = $props();
+	const validatedRedirectTo = $derived(normalizeRedirect(redirectTo));
+
+	// Preserve the redirect when switching between sign-in and sign-up
+	const redirectQuery = $derived(
+		validatedRedirectTo !== '/dashboard'
+			? `?redirect=${encodeURIComponent(validatedRedirectTo)}`
+			: ''
+	);
 
 	const authEmailCtx = getContext<{ get: () => string; set: (v: string) => void }>('auth:email');
 
@@ -39,7 +50,8 @@
 					{ name, email, password },
 					{
 						onSuccess: () => {
-							goto(resolve('/dashboard'));
+							// eslint-disable-next-line svelte/no-navigation-without-resolve
+							goto(validatedRedirectTo);
 						},
 						onError: (ctx) => {
 							error = ctx.error.message;
@@ -51,7 +63,8 @@
 					{ email, password },
 					{
 						onSuccess: () => {
-							goto(resolve('/dashboard'));
+							// eslint-disable-next-line svelte/no-navigation-without-resolve
+							goto(validatedRedirectTo);
 						},
 						onError: (ctx) => {
 							error = ctx.error.message;
@@ -71,7 +84,7 @@
 		try {
 			await authClient.signIn.social({
 				provider: 'google',
-				callbackURL: '/dashboard'
+				callbackURL: validatedRedirectTo
 			});
 		} catch (err) {
 			error = 'Failed to sign in with Google';
@@ -148,13 +161,15 @@
 		<div class="mt-4 text-center text-sm">
 			{isSignUp ? 'Already have an account?' : "Don't have an account?"}
 			{#if isSignUp}
-				Already have an account?
 				<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
-				<a href={resolve('/auth/sign-in')} class="underline hover:text-primary">Sign In</a>
+				<a href={`${resolve('/auth/sign-in')}${redirectQuery}`} class="underline hover:text-primary"
+					>Sign In</a
+				>
 			{:else}
-				Don't have an account?
 				<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
-				<a href={resolve('/auth/sign-up')} class="underline hover:text-primary">Sign up</a>
+				<a href={`${resolve('/auth/sign-up')}${redirectQuery}`} class="underline hover:text-primary"
+					>Sign up</a
+				>
 			{/if}
 		</div>
 	</Card.Content>
