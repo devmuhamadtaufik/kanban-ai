@@ -18,7 +18,8 @@ import {
 	slugifyOrganizationName
 } from '../lib/organizations';
 
-const siteUrl = process.env.SITE_URL!;
+const siteUrl =
+	process.env.SITE_URL || (process.env.BETTER_AUTH_URL as string) || 'http://localhost:5173';
 
 async function createAutumnCustomerForOrganization({
 	organization,
@@ -98,6 +99,7 @@ const requireAssignableRole = (roles: string[]) => {
 export const createOptions = (ctx: GenericCtx<DataModel>) =>
 	({
 		baseURL: siteUrl,
+		trustedOrigins: ['http://localhost:5173', siteUrl],
 		database: authComponent.adapter(ctx),
 		advanced: {
 			database: {

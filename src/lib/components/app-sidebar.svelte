@@ -1,7 +1,6 @@
 <script lang="ts">
 	import {
 		Camera,
-		ChartColumn,
 		LayoutDashboard,
 		Sparkles,
 		FileText,
@@ -60,19 +59,14 @@
 				]
 			: []),
 		{
+			title: 'Boards',
+			url: '/boards',
+			icon: Folder
+		},
+		{
 			title: 'Organization',
 			url: '/organization',
 			icon: Users
-		},
-		{
-			title: 'Analytics',
-			url: '#',
-			icon: ChartColumn
-		},
-		{
-			title: 'Projects',
-			url: '#',
-			icon: Folder
 		}
 	]);
 
