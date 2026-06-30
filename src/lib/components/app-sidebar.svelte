@@ -10,7 +10,9 @@
 		Building2,
 		Settings,
 		Users,
-		CreditCard
+		CreditCard,
+		ListTodo,
+		Timer
 	} from '@lucide/svelte';
 	import NavAdmin from './nav-admin.svelte';
 	import NavMain from './nav-main.svelte';
@@ -62,6 +64,16 @@
 			title: 'Boards',
 			url: '/boards',
 			icon: Folder
+		},
+		{
+			title: 'Backlog',
+			url: '/backlog',
+			icon: ListTodo
+		},
+		{
+			title: 'Sprint',
+			url: '/sprint',
+			icon: Timer
 		},
 		{
 			title: 'Organization',
